@@ -109,6 +109,11 @@ namespace TwoDesperadosTest
             this.interrupted = true;
         }
 
+        public bool IsInterrupted()
+        {
+            return interrupted;
+        }
+
         private IEnumerator DrawLineRoutine(Action action)
         {
             while (currentDistance <= totalDistance)
@@ -122,8 +127,14 @@ namespace TwoDesperadosTest
                 yield return new WaitForSeconds(.1f);
             }
 
-            if (!interrupted && action != null)
-                action();
+            if (!interrupted)
+            {
+                lineTransform.sizeDelta = new Vector2(totalDistance, 3f);
+                lineTransform.anchoredPosition = start + dir * totalDistance * 0.5f;
+
+                if (action != null)
+                    action();
+            }
 
             running = false;
             interrupted = false;

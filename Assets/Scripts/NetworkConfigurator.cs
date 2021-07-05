@@ -102,11 +102,17 @@ namespace TwoDesperadosTest
                 }
             }
 
+            //TODO first 3 nodes should be in different rows and columns to fix the 
+
             int cnt = numberOfNodes;
+
+            int startNodeRow = -1;
+            int startNodeColumn = -1;
             
             while (cnt > 0)
             {
 
+                
                 int row = randomNoGenerator.Next(0, numberOfNodes);
                 int column = randomNoGenerator.Next(0, numberOfNodes);
 
@@ -117,11 +123,27 @@ namespace TwoDesperadosTest
                     column = randomNoGenerator.Next(0, numberOfNodes);
                 }
 
+                if (cnt == numberOfNodes - 1 && row == startNodeRow && column == startNodeColumn) //FIX FOR TRIANGULATION PROBLEM
+                {
+                    if (row == numberOfNodes - 1)
+                        row--;
+                    else
+                        row++;
+
+                    if (column == numberOfNodes - 1)
+                        column--;
+                    else
+                        column++;
+                }
+
                 int hackingDiff = randomNoGenerator.Next(NetworkNode.MINIMUM_HACKING_DIFFICULTY, 100);
                 gridGraphRepresentation[row, column] = hackingDiff;
 
                 if (nodeTypeAmount[NetworkNode.Type.Start] > 0)//TODO refactor
                 {
+                    startNodeRow = row;
+                    startNodeColumn = column;
+
                     startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
                         .SetHackingDifficulty(hackingDiff);
                     ret.nodes.Add(startNode);
@@ -160,7 +182,6 @@ namespace TwoDesperadosTest
                 }
 
                 nodePresenceMatrix[row, column] = true;
-
                 cnt--;
             };
             

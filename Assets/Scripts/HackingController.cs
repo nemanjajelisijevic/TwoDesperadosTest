@@ -69,7 +69,7 @@ namespace TwoDesperadosTest
 
         private bool hackingInProgress;
 
-        public Action<string> nodeHackedAction = null;
+        public Action<string> consoleLog = null;
 
         public HackingController(
             List<NetworkNode> nodes, 
@@ -182,8 +182,8 @@ namespace TwoDesperadosTest
         {
             if (node.GetNodeType().Equals(NetworkNode.Type.Start))
             {
-                if (nodeHackedAction != null)
-                    nodeHackedAction("Selected Start node. Keep it safe :)");
+                if (consoleLog != null)
+                    consoleLog("Selected Start node. Keep it safe :)");
             }
             else if (discoveredNodes.Contains(node) && trapsCount > 0)
             {
@@ -207,8 +207,8 @@ namespace TwoDesperadosTest
 
                 int hackingDifficulty = node.GetHackingDifficulty();
 
-                if (nodeHackedAction != null)
-                    nodeHackedAction(String.Format("Hacking {0} node", node.GetNodeType()));
+                if (consoleLog != null)
+                    consoleLog(String.Format("Hacking {0} node", node.GetNodeType()));
 
                 Vector2 startPos = new Vector2(parent.GetPosition().x + LINK_LINE_OFFSET, parent.GetPosition().y + LINK_LINE_OFFSET);
                 Vector2 endPos = new Vector2(node.GetPosition().x + LINK_LINE_OFFSET, node.GetPosition().y + LINK_LINE_OFFSET);
@@ -221,8 +221,8 @@ namespace TwoDesperadosTest
                     .Start(() =>
                     {
 
-                        if (nodeHackedAction != null)
-                            nodeHackedAction("Node hacked!");
+                        if (consoleLog != null)
+                            consoleLog("Node hacked!");
 
                         //move node to correspondning structure 
                         undiscoveredNodes.Remove(node);
@@ -275,14 +275,12 @@ namespace TwoDesperadosTest
                         updateXpAction(xp);
 
                         hackingInProgress = false;
-
-
                     });
 
             }
             else {
-                if (nodeHackedAction != null)
-                    nodeHackedAction("Node not available yet!");
+                if (consoleLog != null)
+                    consoleLog("Node not available yet!");
             }
             
             //DEBUG only
@@ -359,6 +357,12 @@ namespace TwoDesperadosTest
                 node.SetTracerDelay(trapDelay);
                 updateRewardAction(Reward.Trap, --trapsCount);
             }
+        }
+
+        public void BlockSignal()
+        {
+            if (hackingInProgress && !linkAnimator.IsInterrupted())
+                linkAnimator.Stop();
         }
 
         private void CalculateHackingDetection(NetworkNode node)

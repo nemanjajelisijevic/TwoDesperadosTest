@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
 using System;
 
 
@@ -25,7 +23,6 @@ namespace TwoDesperadosTest
         public Text Console;
 
         private Action<String, Color> consolePrinter = null;
-
         
         private RectTransform graphContainer;
 
@@ -71,6 +68,7 @@ namespace TwoDesperadosTest
                     nodeToButtonMap.Add(node, nodeButton);
                 });
                 
+                //init controllers
                 hackingController = new HackingController(
                     networkConf.nodes, 
                     networkConfigurator.treasureNodes.Count, 
@@ -83,13 +81,17 @@ namespace TwoDesperadosTest
                 
                 pathFinder = new DijkstraPathFinder();
 
+                //configure tracer controllers
                 networkConfigurator.firewallNodes.ForEach(firewallNode =>
                 {
 
                     List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
                     
                     TracerController tracer = new TracerController(new LinkAnimator(graphContainer, this), new TimeoutWaiter(this))
-                        .SetTraceCompletedaction(() => consolePrinter("You've been traced! Police called.", Color.red));
+                        .SetTraceCompletedAction(() => {
+                            consolePrinter("You've been traced! Police called.", Color.red);
+                            hackingController.BlockSignal();
+                        });
 
                     tracerWithPathMap.Add(
                         cheapestPathToStart[0], //firewall node
@@ -97,17 +99,21 @@ namespace TwoDesperadosTest
                         );
                 });
 
+                //configure hacking controller
                 hackingController
-                    .SetHackingCompletedAction(() => consolePrinter("Wow! Nice skills. Wanna job?", Color.green))
+                    .SetHackingCompletedAction(() => {
+
+                        consolePrinter("Wow! Nice skills. Do you want a job?", Color.green);
+                        foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
+                            tracerPair.Value.Key.BlockTracer();
+                    })
                     .SetDrawLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
 
                         consolePrinter("Hacking detected! Hurry up!", Color.red);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
-                        {
                             tracerPair.Value.Key.TraceHackingSignal(tracerPair.Value.Value);
-                        }
 
                     })
                     .SetFirewallHackedAction(firewallNode => {
@@ -117,9 +123,15 @@ namespace TwoDesperadosTest
                     .SetUpdateRewardAction((reward, count) => {
 
                         if (reward.Equals(HackingController.Reward.Nuke))
+                        {
                             Nuke_ui.text = String.Format(nukesUiTemplate, count);
+                            consolePrinter("Acquired a Nuke!", Color.green);
+                        }
                         else if (reward.Equals(HackingController.Reward.Trap))
+                        {
+                            consolePrinter("Acquired a Trap!", Color.green);
                             Trap_ui.text = String.Format(trapsUiTemplate, count); ;
+                        }
 
                     })
                     .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
@@ -147,7 +159,7 @@ namespace TwoDesperadosTest
                         actionPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(node.GetPosition().x + 35, node.GetPosition().y);
                         Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
                         
-                        foreach (Button butt in buttons)
+                        foreach (Button butt in buttons)//TODO fix
                         {
                             if (butt.name == "Difficulty")
                             {
@@ -171,7 +183,7 @@ namespace TwoDesperadosTest
                                 if (!trapText.Equals(string.Empty))
                                 {
                                     butt.onClick.AddListener(() => {
-                                        nodeToButtonMap[node].GetComponent<Image>().color = Color.black;
+                                        nodeToButtonMap[node].GetComponent<Image>().color = Color.magenta;
                                         consolePrinter("Trap set!", Color.green);
                                         hackingController.TrapNode(node);
                                         actionPanel.SetActive(false);
@@ -185,7 +197,10 @@ namespace TwoDesperadosTest
                         }
                     });
 
-                hackingController.nodeHackedAction = message => consolePrinter(message, Color.green);
+                //set controller loggers
+                hackingController.consoleLog = message => consolePrinter(message, Color.green);
+                foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> entry in tracerWithPathMap)
+                    entry.Value.Key.consoleLog = message => consolePrinter(message, Color.red);
                 
             }
             catch (Exception e)
@@ -233,9 +248,7 @@ namespace TwoDesperadosTest
                 Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
 
                 foreach (Button butt in buttons)
-                {
                     butt.onClick.RemoveAllListeners();
-                }
 
                 hackingController.SelectNode(node);
             });

@@ -27,6 +27,7 @@ namespace TwoDesperadosTest
                 this.shortestPathFromSource = new List<NetworkNode>();
             }
 
+            //for hashset stucture
             public override bool Equals(object obj)
             {
                 var wrapper = obj as NetworkNodeWrapper;
@@ -34,6 +35,7 @@ namespace TwoDesperadosTest
                        EqualityComparer<NetworkNode>.Default.Equals(node, wrapper.node);
             }
 
+            //for hashset stucture
             public override int GetHashCode()
             {
                 return -231681771 + EqualityComparer<NetworkNode>.Default.GetHashCode(node);
@@ -60,16 +62,14 @@ namespace TwoDesperadosTest
             while (unvisitedNodes.Count > 0)
             {
                 NetworkNodeWrapper currentNode = GetLowestDifficultyNode(unvisitedNodes);
-
-                //Debug.LogFormat("Current node: {0}", currentNode.ToString());
-
+                
                 unvisitedNodes.Remove(currentNode);
 
                 List<NetworkNodeWrapper> adjacentNodes = new List<NetworkNodeWrapper>();
 
                 foreach (NetworkNode adjNode in currentNode.node.GetNieghbourNodes())
                 {
-                    NetworkNodeWrapper adjNodeWrapper = new NetworkNodeWrapper(adjNode); //TODO Bug is here!!!!!!!!!
+                    NetworkNodeWrapper adjNodeWrapper = new NetworkNodeWrapper(adjNode);
                     adjacentNodes.Add(adjNodeWrapper);
                 }
                 
@@ -82,7 +82,6 @@ namespace TwoDesperadosTest
                         CalculateMinDiffPathToNode(adjNodeWrapper, currentNode);
                         bool added = unvisitedNodes.Add(adjNodeWrapper);
                     }
-
                 }
 
                 visitedNodes.Add(currentNode);

@@ -18,6 +18,8 @@ namespace TwoDesperadosTest
         private Action nodeTraceAction = null;
         private Action traceCompletedAction = null;
 
+        public Action<string> consoleLog = null;
+
         public TracerController(LinkAnimator linkAnimator, TimeoutWaiter timeoutWaiter)
         {
             this.tracerAnimator = linkAnimator;
@@ -26,7 +28,7 @@ namespace TwoDesperadosTest
         }
 
         //trace complete action setter
-        public TracerController SetTraceCompletedaction(Action traceCompletedAction)
+        public TracerController SetTraceCompletedAction(Action traceCompletedAction)
         {
             this.traceCompletedAction = traceCompletedAction;
             return this;
@@ -49,12 +51,10 @@ namespace TwoDesperadosTest
         public void TraceHackingSignal(List<NetworkNode> tracePath)
         {
 
-            Debug.Log("Tracing commencing!!!!!");
-            tracePath.ForEach(node => Debug.LogFormat("{0}", node.ToString()));
-
             if (blocked)
             {
-                Debug.Log("Tracer blocked!!!!!");
+                if (consoleLog != null)
+                    consoleLog("Tracer blocked!");
                 return;
             }
 
@@ -76,7 +76,12 @@ namespace TwoDesperadosTest
                         .SetStartPoint(traceQueue.Dequeue().GetPosition())
                         .SetEndPoint(traceQueue.Peek().GetPosition())
                         .SetHackingDuration(traceQueue.Peek().GetHackingDuration() * tracingSpeedModifier)
-                        .Start(() => timeoutWaiter.Wait(traceQueue.Peek().GetTracerDelay(), nodeTraceAction));
+                        .Start(() => {
+                            int tracerDelay = traceQueue.Peek().GetTracerDelay();
+                            consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
+                            timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
+                            consoleLog(String.Format("Tracer continued..."));
+                        });
                 }
                 else
                     traceCompletedAction();
@@ -87,7 +92,12 @@ namespace TwoDesperadosTest
                 .SetStartPoint(firstNode.GetPosition())
                 .SetEndPoint(traceQueue.Peek().GetPosition())
                 .SetHackingDuration(traceQueue.Peek().GetHackingDuration() * tracingSpeedModifier)
-                .Start(() => timeoutWaiter.Wait(firstNode.GetTracerDelay(), nodeTraceAction));
+                .Start(() => {
+                    int tracerDelay = traceQueue.Peek().GetTracerDelay();
+                    consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
+                    timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
+                    consoleLog(String.Format("Tracer continued..."));
+                });
         }
         
     }
