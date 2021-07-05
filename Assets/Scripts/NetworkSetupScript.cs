@@ -42,7 +42,7 @@ namespace TwoDesperadosTest
 
         private void Awake()
         {            
-            int noOfNodes = 15;
+            int noOfNodes = 25;
             int xp = 0;
             int tracerSpeedDecrease = 50;
             int trapDelay = 10;
@@ -57,7 +57,7 @@ namespace TwoDesperadosTest
 
             try
             {
-                networkConfigurator = new NetworkConfigurator(noOfNodes, 3, 2, 2);
+                networkConfigurator = new NetworkConfigurator(noOfNodes, 4, 3, 3);
                 
                 NetworkConfigurator.NetworkConfiguration networkConf 
                     = networkConfigurator.ConfigureNetwork(graphContainer.sizeDelta.x - padding, graphContainer.sizeDelta.y - padding);
@@ -110,14 +110,14 @@ namespace TwoDesperadosTest
                     .SetDrawLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
 
-                        consolePrinter("Hacking detected! Hurry up!", Color.red);
+                        consolePrinter("Your IP address has been compromised! Hurry up!", Color.red);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
                             tracerPair.Value.Key.TraceHackingSignal(tracerPair.Value.Value);
 
                     })
                     .SetFirewallHackedAction(firewallNode => {
-                        consolePrinter("Firewall hacked. Good job!", Color.green);
+                        consolePrinter("Firewall system hacked. Good job!", Color.green);
                         tracerWithPathMap[firewallNode].Key.BlockTracer();
                     })
                     .SetUpdateRewardAction((reward, count) => {
@@ -125,11 +125,11 @@ namespace TwoDesperadosTest
                         if (reward.Equals(HackingController.Reward.Nuke))
                         {
                             Nuke_ui.text = String.Format(nukesUiTemplate, count);
-                            consolePrinter("Acquired a Nuke!", Color.green);
+                            consolePrinter("Acquired a Nuke virus!", Color.green);
                         }
                         else if (reward.Equals(HackingController.Reward.Trap))
                         {
-                            consolePrinter("Acquired a Trap!", Color.green);
+                            consolePrinter("Acquired a Trap root kit!", Color.green);
                             Trap_ui.text = String.Format(trapsUiTemplate, count); ;
                         }
 
@@ -137,7 +137,7 @@ namespace TwoDesperadosTest
                     .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
                     .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => {
 
-                        consolePrinter("Spam node hacked! Recalculating links...", Color.green);
+                        consolePrinter("Spam node hacked! Recalculating Node hacking difficulties...", Color.green);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
@@ -150,6 +150,8 @@ namespace TwoDesperadosTest
                             tracerWithPathMap[firewallNode].Value.Clear();
                             cheapestPathToStart.ForEach(node => tracerWithPathMap[firewallNode].Value.Add(node));
                         });
+
+                        consolePrinter("Node hacking difficulties recalculated!", Color.green);
 
                     })
                     .SetChooseAttackAction((node, hackText, nukeText, trapText, difficulty) => {
@@ -184,7 +186,7 @@ namespace TwoDesperadosTest
                                 {
                                     butt.onClick.AddListener(() => {
                                         nodeToButtonMap[node].GetComponent<Image>().color = Color.magenta;
-                                        consolePrinter("Trap set!", Color.green);
+                                        consolePrinter("Trap kit set!", Color.green);
                                         hackingController.TrapNode(node);
                                         actionPanel.SetActive(false);
                                     });
@@ -205,7 +207,7 @@ namespace TwoDesperadosTest
             }
             catch (Exception e)
             {
-                Debug.Log("Error configuring network: " + e.Message);
+                Debug.Log("Error configuring network: " + e.Message + e.StackTrace);
                 consolePrinter("Init error...", Color.red);
             }
         }

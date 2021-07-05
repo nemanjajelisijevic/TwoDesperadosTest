@@ -21,8 +21,7 @@ namespace TwoDesperadosTest
         public List<NetworkNode> firewallNodes;
         public List<NetworkNode> treasureNodes;
         public List<NetworkNode> spamNodes;
-
-        public int[,] gridGraphRepresentation;//Neded for tracer pathfindiing
+        
 
         public class NetworkConfiguration
         {
@@ -79,7 +78,6 @@ namespace TwoDesperadosTest
 
             //divide area into the matrix for discrete node positions
             Vector2[,] fieldCenterMatrix = new Vector2[numberOfNodes, numberOfNodes];
-            gridGraphRepresentation = new int[numberOfNodes, numberOfNodes];
 
             for (int i = 0; i < numberOfNodes; ++i)
             {
@@ -106,44 +104,30 @@ namespace TwoDesperadosTest
 
             int cnt = numberOfNodes;
 
-            int startNodeRow = -1;
-            int startNodeColumn = -1;
-            
+            //Fix for the triangulation problem when 3 nodes are in the same column or row
+            int[] rowNodeCount = new int[numberOfNodes];
+            int[] columnNodeCount = new int[numberOfNodes];
+
             while (cnt > 0)
             {
-
                 
                 int row = randomNoGenerator.Next(0, numberOfNodes);
                 int column = randomNoGenerator.Next(0, numberOfNodes);
 
                 // get random field repeatedly until a free field is found
-                while (nodePresenceMatrix[row, column])
+                while (rowNodeCount[row] > 1 || columnNodeCount[column] >  1 || nodePresenceMatrix[row, column]) 
                 {
                     row = randomNoGenerator.Next(0, numberOfNodes);
                     column = randomNoGenerator.Next(0, numberOfNodes);
                 }
 
-                if (cnt == numberOfNodes - 1 && row == startNodeRow && column == startNodeColumn) //FIX FOR TRIANGULATION PROBLEM
-                {
-                    if (row == numberOfNodes - 1)
-                        row--;
-                    else
-                        row++;
-
-                    if (column == numberOfNodes - 1)
-                        column--;
-                    else
-                        column++;
-                }
+                rowNodeCount[row] += 1;
+                columnNodeCount[column] += 1;
 
                 int hackingDiff = randomNoGenerator.Next(NetworkNode.MINIMUM_HACKING_DIFFICULTY, 100);
-                gridGraphRepresentation[row, column] = hackingDiff;
 
                 if (nodeTypeAmount[NetworkNode.Type.Start] > 0)//TODO refactor
                 {
-                    startNodeRow = row;
-                    startNodeColumn = column;
-
                     startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
                         .SetHackingDifficulty(hackingDiff);
                     ret.nodes.Add(startNode);
@@ -156,7 +140,6 @@ namespace TwoDesperadosTest
                     firewallNodes.Add(firewall);
                     ret.nodes.Add(firewall);
                     nodeTypeAmount[NetworkNode.Type.Firewall] = nodeTypeAmount[NetworkNode.Type.Firewall] - 1;
-                    //TODO delete link between adjecant start and firewall
                 }
                 else if (nodeTypeAmount[NetworkNode.Type.Treasure] > 0)
                 {
@@ -198,9 +181,6 @@ namespace TwoDesperadosTest
                     ret.links.Remove(startToFirewallLink);
                 }
             });
-
-            //Debug.LogFormat("Nodes end count: {0}", ret.nodes.Count);
-            //Debug.LogFormat("Edges end count: {0}", ret.links.Count);
 
             return ret;
         }
