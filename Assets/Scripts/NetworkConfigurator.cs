@@ -34,20 +34,26 @@ namespace TwoDesperadosTest
             }
         }
 
-        public NetworkConfigurator(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams)
+        public static void TestNodeTypeAmounts(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams)
         {
             // validate params and throw errors
-            if (noOfNodes < 5) 
+            if (noOfNodes < 5)
                 throw new ArgumentException("Invalid number of nodes. Min 5");
 
             if (noOfTreasures < 1 || noOfTreasures > (noOfNodes - 4))
                 throw new ArgumentException(String.Format("Invalid number of treasure nodes. Min 1, max {0}", noOfNodes - 4));
-            
+
             if (noOfFirewalls < 1 || noOfFirewalls > (noOfNodes - noOfTreasures - numberOfStartNodes - 2))
                 throw new ArgumentException(String.Format("Invalid number of firewall nodes. Min 1, max {0}", noOfNodes - noOfTreasures - numberOfStartNodes - 2));
 
             if (noOfSpams < 1 || noOfSpams > (noOfNodes - numberOfStartNodes - noOfTreasures - noOfFirewalls - 1))
                 throw new ArgumentException(String.Format("Invalid number of spam nodes. Min 1, max {0}", noOfNodes - numberOfStartNodes - noOfTreasures - noOfFirewalls - 1));
+        }
+
+        public NetworkConfigurator(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams, ILinkGenerator linkGenerator)
+        {
+            // validate params and throw errors
+            TestNodeTypeAmounts(noOfNodes, noOfTreasures, noOfFirewalls, noOfSpams);
 
             nodeTypeAmount = new Dictionary<NetworkNode.Type, int>();
 
@@ -63,7 +69,7 @@ namespace TwoDesperadosTest
 
             randomNoGenerator = new System.Random();
 
-            linkGenerator = new IncrementalTriangulationLinkGenerator();
+            this.linkGenerator = linkGenerator;
         }
         
         public NetworkConfiguration ConfigureNetwork(float areaWidth, float areaHeight)

@@ -250,6 +250,7 @@ namespace TwoDesperadosTest
                         {
                             node.NeutralizeFirewall();
                             firewallHackedActon(node);
+                            CalculateHackingDetection(node);
                         }
                         else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))
                         {

@@ -12,7 +12,6 @@ namespace TwoDesperadosTest
 
         [SerializeField]
         private Sprite nodeSprite;
-
         [SerializeField]
         public Text XP_ui;
         [SerializeField]
@@ -42,7 +41,11 @@ namespace TwoDesperadosTest
 
         private void Awake()
         {            
-            int noOfNodes = 25;
+            int noOfNodes = 20;
+            int noOfTreasureNodes = 4;
+            int noOfFirewallNodes = 3;
+            int noOfSpamNodes = 2;
+
             int xp = 0;
             int tracerSpeedDecrease = 50;
             int trapDelay = 10;
@@ -57,7 +60,7 @@ namespace TwoDesperadosTest
 
             try
             {
-                networkConfigurator = new NetworkConfigurator(noOfNodes, 4, 3, 3);
+                networkConfigurator = new NetworkConfigurator(noOfNodes, noOfTreasureNodes, noOfFirewallNodes, noOfSpamNodes, new IncrementalTriangulationLinkGenerator());
                 
                 NetworkConfigurator.NetworkConfiguration networkConf 
                     = networkConfigurator.ConfigureNetwork(graphContainer.sizeDelta.x - padding, graphContainer.sizeDelta.y - padding);
@@ -91,6 +94,8 @@ namespace TwoDesperadosTest
                         .SetTraceCompletedAction(() => {
                             consolePrinter("You've been traced! Police called.", Color.red);
                             hackingController.BlockSignal();
+                            foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
+                                tracerPair.Value.Key.BlockTracer();
                         });
 
                     tracerWithPathMap.Add(
@@ -135,12 +140,10 @@ namespace TwoDesperadosTest
 
                     })
                     .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
-                    .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => {
+                    .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => { 
 
                         consolePrinter("Spam node hacked! Recalculating Node hacking difficulties...", Color.green);
 
-                        foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
-                            tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
 
                         //recalculate cheapest paths from firewalls
                         networkConfigurator.firewallNodes.ForEach(firewallNode =>
@@ -150,6 +153,13 @@ namespace TwoDesperadosTest
                             tracerWithPathMap[firewallNode].Value.Clear();
                             cheapestPathToStart.ForEach(node => tracerWithPathMap[firewallNode].Value.Add(node));
                         });
+
+
+                        foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in tracerWithPathMap)
+                        {
+                            tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
+                            tracerPair.Value.Key.SetTracePath(tracerPair.Value.Value);
+                        }
 
                         consolePrinter("Node hacking difficulties recalculated!", Color.green);
 
@@ -212,6 +222,8 @@ namespace TwoDesperadosTest
             }
         }
 
+
+        //UI draw functions
         private GameObject DrawNode(NetworkNode node)
         {
             GameObject nodeObject = new GameObject("node", typeof(Button));

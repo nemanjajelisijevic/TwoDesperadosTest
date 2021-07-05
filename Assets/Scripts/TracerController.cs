@@ -41,6 +41,13 @@ namespace TwoDesperadosTest
             return this;
         }
 
+        public TracerController SetTracePath(List<NetworkNode> tracePath)
+        {
+            this.traceQueue = new Queue<NetworkNode>();
+            tracePath.ForEach(node => traceQueue.Enqueue(node));
+            return this;
+        }
+
         public void BlockTracer()
         {
             blocked = true;
@@ -54,7 +61,7 @@ namespace TwoDesperadosTest
             if (blocked)
             {
                 if (consoleLog != null)
-                    consoleLog("Tracer blocked!");
+                    consoleLog("Tracer is blocked!");
                 return;
             }
 
@@ -80,7 +87,8 @@ namespace TwoDesperadosTest
                             int tracerDelay = traceQueue.Peek().GetTracerDelay();
                             consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
                             timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                            consoleLog(String.Format("Tracer continued..."));
+                            if (traceQueue.Count > 1)
+                                consoleLog(String.Format("Tracer continued..."));
                         });
                 }
                 else
@@ -96,7 +104,8 @@ namespace TwoDesperadosTest
                     int tracerDelay = traceQueue.Peek().GetTracerDelay();
                     consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
                     timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                    consoleLog(String.Format("Tracer continued..."));
+                    if (traceQueue.Count > 1)
+                        consoleLog(String.Format("Tracer continued..."));
                 });
         }
         
