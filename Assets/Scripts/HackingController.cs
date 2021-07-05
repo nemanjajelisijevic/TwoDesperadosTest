@@ -62,6 +62,7 @@ namespace TwoDesperadosTest
         private Action hackingDetectedAction = null;
         private Action hackingCompletedAction = null;
         private Action<NetworkNode> firewallHackedActon = null;
+        private Action<Vector2, Vector2, Color> drawLinkAction;
         
         //random generator for reward
         System.Random randomGenerator;
@@ -164,9 +165,15 @@ namespace TwoDesperadosTest
             return this;
         }
 
-        public HackingController SetFirewallHackedActionAction(Action<NetworkNode> firewallHackedAction)
+        public HackingController SetFirewallHackedAction(Action<NetworkNode> firewallHackedAction)
         {
             this.firewallHackedActon = firewallHackedAction;
+            return this;
+        }
+
+        public HackingController SetDrawLinkAction(Action<Vector2, Vector2, Color> drawLinkAction)
+        {
+            this.drawLinkAction = drawLinkAction;
             return this;
         }
 
@@ -209,7 +216,7 @@ namespace TwoDesperadosTest
                 linkAnimator
                     .SetStartPoint(startPos)
                     .SetEndPoint(endPos)
-                    .SetLinkColor(Color.blue)
+                    .SetLinkColor(Color.green)
                     .SetHackingDuration(node.GetHackingDifficulty() / NetworkNode.MINIMUM_HACKING_DIFFICULTY)
                     .Start(() =>
                     {
@@ -261,14 +268,7 @@ namespace TwoDesperadosTest
                         }
 
                         //add new nodes to hack
-                        node.GetNieghbourNodes().ForEach(neighbour =>
-                        {
-
-                            if (!nodesToHack.ContainsKey(neighbour))
-                                nodesToHack.Add(neighbour, node);
-                            else
-                                nodesToHack[neighbour] = node;
-                        });
+                        MarkNeighborsAsHackable(node);
 
                         //update xp
                         xp += node.GetHackingDifficulty();
@@ -305,50 +305,47 @@ namespace TwoDesperadosTest
                 Vector2 startPos = new Vector2(parent.GetPosition().x + LINK_LINE_OFFSET, parent.GetPosition().y + LINK_LINE_OFFSET);
                 Vector2 endPos = new Vector2(node.GetPosition().x + LINK_LINE_OFFSET, node.GetPosition().y + LINK_LINE_OFFSET);
 
-                linkAnimator
-                    .SetStartPoint(startPos)
-                    .SetEndPoint(endPos)
-                    .SetLinkColor(Color.yellow)
-                    .SetHackingDuration(1f)
-                    .Start(() => {
+                drawLinkAction(startPos, endPos, Color.green);
+                
+                //move node to correspondning structure 
+                undiscoveredNodes.Remove(node);
+                discoveredNodes.Add(node);
+                nodesToHack.Remove(node);
 
-                        //move node to correspondning structure 
-                        undiscoveredNodes.Remove(node);
-                        discoveredNodes.Add(node);
-                        nodesToHack.Remove(node);
+                if (node.GetNodeType().Equals(NetworkNode.Type.Treasure))
+                {
+                    treasureNodesToHack--;
 
-                        if (node.GetNodeType().Equals(NetworkNode.Type.Treasure))
-                        {
-                            treasureNodesToHack--;
+                    if (treasureNodesToHack == 0) //WIN GAME!
+                    {
+                        hackingCompletedAction();
+                        return;
+                    }
+                    else //Get those sweet rewards
+                    {
+                        GenerateRewards();
+                    }
 
-                            if (treasureNodesToHack == 0) //WIN GAME!
-                            {
-                                hackingCompletedAction();
-                                return;
-                            }
-                            else //Get those sweet rewards
-                            {
-                                GenerateRewards();
-                            }
+                }
+                else if (node.GetNodeType().Equals(NetworkNode.Type.Firewall))
+                {
+                    node.NeutralizeFirewall();
+                    firewallHackedActon(node);
+                }
+                else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))
+                {
+                    //do not shuffle undiscovered node diff with nuke
+                    spamNodeHackedAction(tracerSpeedDecrease);
+                }
 
-                        }
-                        else if (node.GetNodeType().Equals(NetworkNode.Type.Firewall))
-                        {
-                            node.NeutralizeFirewall();
-                            firewallHackedActon(node);
-                        }
-                        else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))
-                        {
-                            //do not shuffle undiscovered node diff with nuke
-                            spamNodeHackedAction(tracerSpeedDecrease);
-                        }
+                //add new nodes to hack
+                MarkNeighborsAsHackable(node);
 
-                        //update xp
-                        xp += node.GetHackingDifficulty();
-                        updateXpAction(xp);
+                //update xp
+                xp += node.GetHackingDifficulty();
+                updateXpAction(xp);
 
-                        hackingInProgress = false;
-                    });
+                hackingInProgress = false;
             }
         }
 
@@ -383,6 +380,17 @@ namespace TwoDesperadosTest
                     updateRewardAction(Reward.Trap, ++trapsCount);
                     break;
             }
+        }
+
+        private void MarkNeighborsAsHackable(NetworkNode node)
+        {
+            node.GetNieghbourNodes().ForEach(neighbour =>
+            {
+                if (!nodesToHack.ContainsKey(neighbour))
+                    nodesToHack.Add(neighbour, node);
+                else
+                    nodesToHack[neighbour] = node;
+            });
         }
 
         //DEBUG 

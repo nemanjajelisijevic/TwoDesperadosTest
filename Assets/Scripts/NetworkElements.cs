@@ -30,8 +30,8 @@ namespace TwoDesperadosTest
         {
             this.position = position;
             this.type = type;
-            this.hackingDificulty = MINIMUM_HACKING_DIFFICULTY;
-            this.tracerDelay = 2;
+            this.hackingDificulty = 3;
+            this.tracerDelay = 1;
             links = new List<Link>();
         }
         
@@ -360,7 +360,7 @@ namespace TwoDesperadosTest
             Vector2 l2_p1 = new Vector2(two.GetNodes().Key.GetPosition().x, two.GetNodes().Key.GetPosition().y);
             Vector2 l2_p2 = new Vector2(two.GetNodes().Value.GetPosition().x, two.GetNodes().Value.GetPosition().y);
 
-            return IntersectingLines(l1_p1, l1_p2, l2_p1, l2_p2, false);
+            return IntersectingLines(l1_p1, l1_p2, l2_p1, l2_p2, true);
         }
 
         private static bool IntersectingLines(Vector2 l1_p1, Vector2 l1_p2, Vector2 l2_p1, Vector2 l2_p2, bool shouldIncludeEndPoints)

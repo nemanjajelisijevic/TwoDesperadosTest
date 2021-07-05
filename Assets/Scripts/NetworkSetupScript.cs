@@ -26,7 +26,6 @@ namespace TwoDesperadosTest
 
         private Action<String, Color> consolePrinter = null;
 
-        public GameObject actionPanel;
         
         private RectTransform graphContainer;
 
@@ -38,9 +37,15 @@ namespace TwoDesperadosTest
 
         private Dictionary<NetworkNode, GameObject> nodeToButtonMap;
 
+        public GameObject actionPanel;
+
+        private string xpUiTemplate = "var xp = {0};";
+        private string nukesUiTemplate = "var nukes = {0};";
+        private string trapsUiTemplate = "var traps = {0};";
+
         private void Awake()
         {            
-            int noOfNodes = 13;
+            int noOfNodes = 15;
             int xp = 0;
             int tracerSpeedDecrease = 50;
             int trapDelay = 10;
@@ -94,6 +99,7 @@ namespace TwoDesperadosTest
 
                 hackingController
                     .SetHackingCompletedAction(() => consolePrinter("Wow! Nice skills. Wanna job?", Color.green))
+                    .SetDrawLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
 
                         consolePrinter("Hacking detected! Hurry up!", Color.red);
@@ -104,19 +110,19 @@ namespace TwoDesperadosTest
                         }
 
                     })
-                    .SetFirewallHackedActionAction(firewallNode => {
+                    .SetFirewallHackedAction(firewallNode => {
                         consolePrinter("Firewall hacked. Good job!", Color.green);
                         tracerWithPathMap[firewallNode].Key.BlockTracer();
                     })
                     .SetUpdateRewardAction((reward, count) => {
 
                         if (reward.Equals(HackingController.Reward.Nuke))
-                            Nuke_ui.text = "Nukes: " + count;
+                            Nuke_ui.text = String.Format(nukesUiTemplate, count);
                         else if (reward.Equals(HackingController.Reward.Trap))
-                            Trap_ui.text = "Traps: " + count;
+                            Trap_ui.text = String.Format(trapsUiTemplate, count); ;
 
                     })
-                    .SetUpdateXpAction(Xp => XP_ui.text = ("XP: " + Xp))
+                    .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
                     .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => {
 
                         consolePrinter("Spam node hacked! Recalculating links...", Color.green);
@@ -154,29 +160,23 @@ namespace TwoDesperadosTest
                                     butt.enabled = true;
                                     butt.onClick.AddListener(() => { hackingController.HackNode(node); actionPanel.SetActive(false); });
                                 }
-                                else
-                                    butt.onClick.AddListener(() => { });
                             } 
                             else if (butt.name == "Nuke")
                             {
                                 if (!nukeText.Equals(string.Empty))
                                     butt.onClick.AddListener(() => { hackingController.NukeNode(node); actionPanel.SetActive(false);});
-                                else
-                                    butt.onClick.AddListener(() => { });
                             }
                             else if (butt.name == "Trap")
                             {
                                 if (!trapText.Equals(string.Empty))
                                 {
-                                    nodeToButtonMap[node].GetComponent<Image>().color = Color.black;
                                     butt.onClick.AddListener(() => {
+                                        nodeToButtonMap[node].GetComponent<Image>().color = Color.black;
                                         consolePrinter("Trap set!", Color.green);
                                         hackingController.TrapNode(node);
                                         actionPanel.SetActive(false);
                                     });
                                 }
-                                else
-                                    butt.onClick.AddListener(() => { });
                             }
                             else if (butt.name == "Close")
                             {
@@ -186,8 +186,7 @@ namespace TwoDesperadosTest
                     });
 
                 hackingController.nodeHackedAction = message => consolePrinter(message, Color.green);
-
-                Debug.Log("Starting game....");
+                
             }
             catch (Exception e)
             {
@@ -205,8 +204,8 @@ namespace TwoDesperadosTest
             
             switch (node.GetNodeType())
             {
-                case NetworkNode.Type.Start:
-                    nodeObject.GetComponent<Image>().color = Color.blue;
+                case NetworkNode.Type.Start: 
+                    nodeObject.GetComponent<Image>().color = Color.green;
                     break;
                 case NetworkNode.Type.Firewall:
                     nodeObject.GetComponent<Image>().color = Color.red;
@@ -224,14 +223,14 @@ namespace TwoDesperadosTest
 
             RectTransform nodeTransform = nodeObject.GetComponent<RectTransform>();
             nodeTransform.anchoredPosition = node.GetPosition();
-            nodeTransform.sizeDelta = new Vector2(25, 25);
+            nodeTransform.sizeDelta = new Vector2(20, 20);
             nodeTransform.anchorMin = new Vector2(0, 0);
             nodeTransform.anchorMax = new Vector2(0, 0);
             nodeTransform.SetAsLastSibling();
 
             nodeObject.GetComponent<Button>().onClick.AddListener(() => {
 
-            Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
+                Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
 
                 foreach (Button butt in buttons)
                 {
@@ -265,7 +264,6 @@ namespace TwoDesperadosTest
             edgeTransform.anchoredPosition = dotPosA + dir * distance * 0.5f;
 
             edgeTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-            
         }
         
     }
