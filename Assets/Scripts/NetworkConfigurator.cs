@@ -34,7 +34,7 @@ namespace TwoDesperadosTest
             }
         }
 
-        public static void TestNodeTypeAmounts(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams)
+        public static void ValidateNodeTypeAmounts(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams)
         {
             // validate params and throw errors
             if (noOfNodes < 5)
@@ -53,7 +53,7 @@ namespace TwoDesperadosTest
         public NetworkConfigurator(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams, ILinkGenerator linkGenerator)
         {
             // validate params and throw errors
-            TestNodeTypeAmounts(noOfNodes, noOfTreasures, noOfFirewalls, noOfSpams);
+            ValidateNodeTypeAmounts(noOfNodes, noOfTreasures, noOfFirewalls, noOfSpams);
 
             nodeTypeAmount = new Dictionary<NetworkNode.Type, int>();
 
@@ -84,6 +84,7 @@ namespace TwoDesperadosTest
 
             //divide area into the matrix for discrete node positions
             Vector2[,] fieldCenterMatrix = new Vector2[numberOfNodes, numberOfNodes];
+            bool[,] nodePresenceMatrix = new bool[numberOfNodes, numberOfNodes];
 
             for (int i = 0; i < numberOfNodes; ++i)
             {
@@ -93,21 +94,11 @@ namespace TwoDesperadosTest
                         fieldCenterMatrix[j, i] = new Vector2((fieldWidth / 2) + (j * fieldWidth), (fieldHeight / 4) + (i * fieldHeight));
                     else
                         fieldCenterMatrix[j, i] = new Vector2((fieldWidth / 2) + (j * fieldWidth), (fieldHeight * 3 / 4) + (i * fieldHeight));
-                }
-            }
 
-            bool[,] nodePresenceMatrix = new bool[numberOfNodes, numberOfNodes];
-
-            for (int i = 0; i < numberOfNodes; ++i)
-            {
-                for (int j = 0; j < numberOfNodes; ++j)
-                {
                     nodePresenceMatrix[j, i] = false;
                 }
             }
-
-            //TODO first 3 nodes should be in different rows and columns to fix the 
-
+            
             int cnt = numberOfNodes;
 
             //Fix for the triangulation problem when 3 nodes are in the same column or row
@@ -193,8 +184,6 @@ namespace TwoDesperadosTest
 
         private void DisconnectDenseLinks(List<Link> links)
         {
-            //Debug.Log(String.Format("Initial no of links: {0}", links.Count));
-            
             //cut the edges that are too dense and belong to the same node
             List<Link> linksToDisconnect = new List<Link>();
 
@@ -223,17 +212,9 @@ namespace TwoDesperadosTest
                 }
 
             }
-
-            //Debug.LogFormat("Links to disconnect: {0}", linksToDisconnect.Count);
-
+            
             linksToDisconnect.ForEach(link => {
-
-                //Debug.Log(String.Format("Link To Remove - Node1(x:{0}, y:{1}) - Node2(x:{2}, y:{3})",
-                //    link.GetNodes().Key.GetPosition().x,
-                //    link.GetNodes().Key.GetPosition().y,
-                //    link.GetNodes().Value.GetPosition().x,
-                //    link.GetNodes().Value.GetPosition().y));
-
+                
                 link.Disconnect();
                 links.Remove(link);
                 
