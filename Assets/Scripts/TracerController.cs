@@ -57,6 +57,18 @@ namespace TwoDesperadosTest
                 throw new ArgumentException(String.Format("Decrease tracer speed percent must be >= 1 && < 100"));
         }
 
+        public TracerController SetTracePath(List<NetworkNode> tracePath)
+        {
+
+            if (traceQueue.Count > 1)
+            {
+                traceQueue.Clear();
+                tracePath.ForEach(node => traceQueue.Enqueue(node));
+            }
+
+            return this;
+        }
+
         public TracerController DecreaseTracerSpeed(int percent)
         {
             ValidateTracerDecreaseSpeed(percent);

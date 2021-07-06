@@ -200,6 +200,8 @@ namespace TwoDesperadosTest
                     float angle = Link.GetAngleBetweenLinks(links[k], links[i]);
 
                     if ((links[k].IsConnectedToNode(links[i].GetNodes().Key) || (links[k].IsConnectedToNode(links[i].GetNodes().Value)))
+                        && links[k].GetNodes().Key.GetNoOfLinks() > 1
+                        && links[k].GetNodes().Value.GetNoOfLinks() > 1
                         && links[i].GetNodes().Key.GetNoOfLinks() > 1
                         && links[i].GetNodes().Value.GetNoOfLinks() > 1
                         && (angle < disconnectionLinksAngle))//|| angle > (360f - angleDiff)))

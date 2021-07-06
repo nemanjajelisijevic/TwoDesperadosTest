@@ -122,7 +122,7 @@ namespace TwoDesperadosTest
         {
             Vector2 start = new Vector2(this.startPoint.x, this.startPoint.y); // local variable for race condition avoidance
 
-            while (currentDistance < totalDistance)
+            while (currentDistance < totalDistance - stepLength)
             {
                 if (interrupted)
                     break;

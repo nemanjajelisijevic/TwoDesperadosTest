@@ -188,23 +188,20 @@ namespace TwoDesperadosTest
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
                         
-                        //recalculate cheapest paths from firewalls
+                        //recalculate cheapest paths for each tracer
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                         {
-                            if (!tracerPair.Value.Key.IsActive())
-                            {
-                                NetworkNode firewallNode = tracerPair.Key;
-                                //NetworkNode currentTracingNode = tracerPair.Value.Key.IsActive() ? tracerPair.Value.Key.GetCurrentTracingNode() : firewallNode;
+                            NetworkNode currentTracingNode = tracerPair.Value.Key.IsActive() ? tracerPair.Value.Key.GetCurrentTracingNode() : tracerPair.Key;
 
-                                List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
+                            List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(currentTracingNode, networkConfigurator.startNode);
                                 
-                                firewallTracerPathMap[firewallNode].Value.Clear();
-                                cheapestPathToStart.ForEach(node => firewallTracerPathMap[firewallNode].Value.Add(node));
+                            firewallTracerPathMap[tracerPair.Key].Value.Clear();
+                            cheapestPathToStart.ForEach(node => firewallTracerPathMap[tracerPair.Key].Value.Add(node));
+
+                            //set new path to tracer controller
+                            firewallTracerPathMap[tracerPair.Key].Key.SetTracePath(cheapestPathToStart);
                                 
-                                consolePrinter(String.Format("Tracer {0} recalculated to start.", tracerPair.Value.Key.GetTracerNumber()), Color.green);
-                            }
-                            //else
-                            //    Debug.Log(string.Format("Tracer {0} active!", tracerPair.Value.Key.GetTracerNumber()));
+                            consolePrinter(String.Format("Tracer {0} recalculated to start.", tracerPair.Value.Key.GetTracerNumber()), Color.red);
                         }
                         
                     })
@@ -227,11 +224,11 @@ namespace TwoDesperadosTest
                                 );
                         Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
                         
-                        foreach (Button butt in buttons)//TODO fix
+                        foreach (Button butt in buttons)
                         {
                             if (butt.name == "Difficulty")
                             {
-                                butt.GetComponentInChildren<Text>().text = "Difficulty: " + (difficulty > -1 ? difficulty.ToString() : "HACKED");
+                                butt.GetComponentInChildren<Text>().text = node.GetNodeType() + ": " + difficulty;
                             }
                             else if (butt.name == "Hack")
                             {
