@@ -48,9 +48,7 @@ namespace TwoDesperadosTest
         private const string consoleUiTemplate = "root@hacker.org:~# ";
 
         private const float padding = 10f;
-
-        private bool hackingDetectedHelperFlag = false;
-
+        
         private void Awake()
         {            
             int noOfNodes = 18;
@@ -157,8 +155,7 @@ namespace TwoDesperadosTest
                     })
                     .SetDrawNukedLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
-
-                        hackingDetectedHelperFlag = true;
+                        
                         consolePrinter("Your IP address has been compromised! Hurry up!", Color.red);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
@@ -181,12 +178,17 @@ namespace TwoDesperadosTest
                     .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => { 
 
                         consolePrinter("Spam node hacked! Recalculating Node hacking difficulties...", Color.green);
-                        
+
+                        bool tracersActive = false; 
+
                         //decrease tracers speed
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
+                        {
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
-
-                        if (!hackingDetectedHelperFlag)
+                            tracersActive = tracerPair.Value.Key.IsActive();
+                        }
+                        
+                        if (!tracersActive)
                         {
                             //recalculate cheapest paths from firewalls
                             foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
@@ -220,7 +222,7 @@ namespace TwoDesperadosTest
                         actionPanel.SetActive(true);    
                         actionPanel.GetComponent<RectTransform>().anchoredPosition = 
                             new Vector2(
-                                node.GetPosition().x < graphContainer.sizeDelta.x / 2 ? node.GetPosition().x + 50 : node.GetPosition().x - 50 , 
+                                node.GetPosition().x < graphContainer.sizeDelta.x / 2 ? node.GetPosition().x + 50 : node.GetPosition().x - 50, 
                                 node.GetPosition().y < graphContainer.sizeDelta.y / 2 ? node.GetPosition().y + 50 : node.GetPosition().y - 50
                                 );
                         Button[] buttons = actionPanel.GetComponentsInChildren<Button>();

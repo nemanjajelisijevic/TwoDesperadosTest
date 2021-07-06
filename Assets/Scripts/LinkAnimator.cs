@@ -20,12 +20,13 @@ namespace TwoDesperadosTest
         private Vector2 dir;
         private float totalDistance;
         private float currentDistance;
-
+        
         private float duration;
         private float stepLength;
 
         private bool running;
         private bool interrupted;
+        
 
         public LinkAnimator(RectTransform container, MonoBehaviour coroutineHolder)
         {
@@ -60,8 +61,8 @@ namespace TwoDesperadosTest
         {
             if (durationInSecs < .1f)
                 throw new ArgumentException(String.Format("Duration must be > 0.1 secs. Passed: {0}", durationInSecs));
-
-            duration = durationInSecs;
+            this.duration = durationInSecs;
+            this.stepLength = totalDistance / (duration * 10);
             return this;
         }
 
@@ -69,16 +70,16 @@ namespace TwoDesperadosTest
         {
             return duration;
         }
-
+        
         public void Start()
         {
             Start(null);
         }
 
-        public void Start(Action action) //TODO return GameObject for later deletion
+        public GameObject Start(Action action)
         {
             if (running)
-                return;
+                return null;
 
             currentDistance = 0f;
             totalDistance = Vector2.Distance(start, end);
@@ -93,7 +94,7 @@ namespace TwoDesperadosTest
             lineTransform = lineObject.GetComponent<RectTransform>();
             lineTransform.anchorMin = new Vector2(0, 0);
             lineTransform.anchorMax = new Vector2(0, 0);
-            lineTransform.sizeDelta = new Vector2(currentDistance, 4f);
+            lineTransform.sizeDelta = new Vector2(currentDistance, 3f); ;
             lineTransform.anchoredPosition = start + dir * currentDistance * 0.5f;
 
             lineTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
@@ -102,6 +103,8 @@ namespace TwoDesperadosTest
             interrupted = false;
 
             coroutineHolder.StartCoroutine(DrawLineRoutine(action));
+
+            return lineObject;
         }
 
         public void Stop()
@@ -116,13 +119,13 @@ namespace TwoDesperadosTest
 
         private IEnumerator DrawLineRoutine(Action action)
         {
-            while (currentDistance <= totalDistance)
+            while (currentDistance < totalDistance)
             {
                 if (interrupted)
                     break;
-
+                
                 currentDistance += stepLength;
-                lineTransform.sizeDelta = new Vector2(currentDistance, 3f);
+                lineTransform.sizeDelta = new Vector2(currentDistance, 3f); //TODO garbage collection
                 lineTransform.anchoredPosition = start + dir * currentDistance * 0.5f;
                 yield return new WaitForSeconds(.1f);
             }

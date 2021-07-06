@@ -34,6 +34,7 @@ namespace TwoDesperadosTest
             }
         }
 
+        //to be called from settings
         public static void ValidateNodeTypeAmounts(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams)
         {
             // validate params and throw errors
