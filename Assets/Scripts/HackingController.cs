@@ -58,17 +58,19 @@ namespace TwoDesperadosTest
         private Action<NetworkNode, string, string, string, int> attackChoiceAction = null;
 
         //functors to activate external behaviour
-        private Action<int> spamNodeHackedAction = null; //slow the tracer
+        private Action<int> spamNodeHackedAction = null;
+        private Action<int> spamNodeNukedAction = null;//slow the tracer
         private Action hackingDetectedAction = null;
         private Action hackingCompletedAction = null;
         private Action<NetworkNode> firewallHackedActon = null;
-        private Action<Vector2, Vector2, Color> drawLinkAction;
+        private Action<Vector2, Vector2, Color> drawNukedLinkAction;
         
         //random generator for reward
         System.Random randomGenerator;
 
+        //protection aganist simultanious API calls
         private bool hackingInProgress;
-
+        
         public Action<string> consoleLog = null;
 
         public HackingController(
@@ -165,15 +167,21 @@ namespace TwoDesperadosTest
             return this;
         }
 
+        public HackingController SetSpamNodeNukedAction(Action<int> spamNodeNukedAction)
+        {
+            this.spamNodeNukedAction = spamNodeNukedAction;
+            return this;
+        }
+        
         public HackingController SetFirewallHackedAction(Action<NetworkNode> firewallHackedAction)
         {
             this.firewallHackedActon = firewallHackedAction;
             return this;
         }
 
-        public HackingController SetDrawLinkAction(Action<Vector2, Vector2, Color> drawLinkAction)
+        public HackingController SetDrawNukedLinkAction(Action<Vector2, Vector2, Color> drawNukedLinkAction)
         {
-            this.drawLinkAction = drawLinkAction;
+            this.drawNukedLinkAction = drawNukedLinkAction;
             return this;
         }
 
@@ -183,7 +191,7 @@ namespace TwoDesperadosTest
             if (node.GetNodeType().Equals(NetworkNode.Type.Start))
             {
                 if (consoleLog != null)
-                    consoleLog("Selected Start node. Keep it safe :)");
+                    consoleLog(String.Format("Selected Start node. Difficulty: {0}. Keep it safe :)", node.GetHackingDifficulty()));
             }
             else if (discoveredNodes.Contains(node) && trapsCount > 0)
             {
@@ -208,7 +216,7 @@ namespace TwoDesperadosTest
                 int hackingDifficulty = node.GetHackingDifficulty();
 
                 if (consoleLog != null)
-                    consoleLog(String.Format("Hacking {0} node", node.GetNodeType()));
+                    consoleLog(String.Format("Hacking {0} node...", node.GetNodeType()));
 
                 Vector2 startPos = new Vector2(parent.GetPosition().x + LINK_LINE_OFFSET, parent.GetPosition().y + LINK_LINE_OFFSET);
                 Vector2 endPos = new Vector2(node.GetPosition().x + LINK_LINE_OFFSET, node.GetPosition().y + LINK_LINE_OFFSET);
@@ -222,7 +230,7 @@ namespace TwoDesperadosTest
                     {
 
                         if (consoleLog != null)
-                            consoleLog("Node hacked!");
+                            consoleLog(String.Format("{0} node hacked!", node.GetNodeType().ToString()));
 
                         //move node to correspondning structure 
                         undiscoveredNodes.Remove(node);
@@ -256,9 +264,10 @@ namespace TwoDesperadosTest
                         {
                             //shuffle undiscovered node difficulties and trigger tracer immediately
                             foreach (NetworkNode undiscoveredNode in undiscoveredNodes)
-                            {
                                 undiscoveredNode.SetHackingDifficulty(randomGenerator.Next(NetworkNode.MINIMUM_HACKING_DIFFICULTY, 101));
-                            }
+                            
+                            foreach (KeyValuePair<NetworkNode, NetworkNode> nodeToHack in nodesToHack)
+                                nodeToHack.Key.SetHackingDifficulty(randomGenerator.Next(NetworkNode.MINIMUM_HACKING_DIFFICULTY, 101));
 
                             spamNodeHackedAction(tracerSpeedDecrease);
                             hackingDetectedAction();
@@ -304,7 +313,7 @@ namespace TwoDesperadosTest
                 Vector2 startPos = new Vector2(parent.GetPosition().x + LINK_LINE_OFFSET, parent.GetPosition().y + LINK_LINE_OFFSET);
                 Vector2 endPos = new Vector2(node.GetPosition().x + LINK_LINE_OFFSET, node.GetPosition().y + LINK_LINE_OFFSET);
 
-                drawLinkAction(startPos, endPos, Color.green);
+                drawNukedLinkAction(startPos, endPos, Color.green);
                 
                 //move node to correspondning structure 
                 undiscoveredNodes.Remove(node);
@@ -334,7 +343,7 @@ namespace TwoDesperadosTest
                 else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))
                 {
                     //do not shuffle undiscovered node diff with nuke
-                    spamNodeHackedAction(tracerSpeedDecrease);
+                    spamNodeNukedAction(tracerSpeedDecrease);
                 }
 
                 //add new nodes to hack
@@ -350,9 +359,6 @@ namespace TwoDesperadosTest
 
         public void TrapNode(NetworkNode node)
         {
-            if (hackingInProgress)
-                return;
-
             if (trapsCount > 0 && discoveredNodes.Contains(node))
             {
                 node.SetTracerDelay(trapDelay);
@@ -376,13 +382,15 @@ namespace TwoDesperadosTest
 
         private void GenerateRewards()
         {
-            switch (randomGenerator.Next(0, 2)) //TODO check if 2 is inclusive
+            switch (randomGenerator.Next(0, 2))
             {
                 case 0:
                     updateRewardAction(Reward.Nuke, ++nukesCount);
+                    consoleLog("Acquired a Nuke virus!");
                     break;
                 case 1:
                     updateRewardAction(Reward.Trap, ++trapsCount);
+                    consoleLog("Acquired a Trap root kit!");
                     break;
             }
         }
