@@ -41,23 +41,26 @@ namespace TwoDesperadosTest
 
         public GameObject actionPanel;
 
-        private string xpUiTemplate = "var xp = {0};";
-        private string nukesUiTemplate = "var nukes = {0};";
-        private string trapsUiTemplate = "var traps = {0};";
-        private string consoleUiTemplate = "root@hacker.org:~# ";
+        //ui text templates
+        private const string xpUiTemplate = "var xp = {0};";
+        private const string nukesUiTemplate = "var nukes = {0};";
+        private const string trapsUiTemplate = "var traps = {0};";
+        private const string consoleUiTemplate = "root@hacker.org:~# ";
+
+        private const float padding = 10f;
+
+        private bool hackingDetectedHelperFlag = false;
 
         private void Awake()
         {            
-            int noOfNodes = 20;
-            int noOfTreasureNodes = 4;
+            int noOfNodes = 18;
+            int noOfTreasureNodes = 3;
             int noOfFirewallNodes = 3;
-            int noOfSpamNodes = 2;
+            int noOfSpamNodes = 4;
 
             int xp = 0;
             int tracerSpeedDecrease = 50;
             int trapDelay = 10;
-
-            float padding = 10f;
             
             graphContainer = transform.Find("GraphContainer").GetComponent<RectTransform>();
 
@@ -128,12 +131,11 @@ namespace TwoDesperadosTest
                 //configure tracer controllers
                 networkConfigurator.firewallNodes.ForEach(firewallNode =>
                 {
-
                     List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
                     
                     TracerController tracer = new TracerController(new LinkAnimator(graphContainer, this), new TimeoutWaiter(this))
                         .SetTraceCompletedAction(() => {
-                            consolePrinter("You've been traced! Police called.", Color.red);
+                            consolePrinter("You've been traced! Police called. Run!", Color.red);
                             hackingController.BlockSignal();
                             foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                                 tracerPair.Value.Key.BlockTracer();
@@ -156,6 +158,7 @@ namespace TwoDesperadosTest
                     .SetDrawNukedLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
 
+                        hackingDetectedHelperFlag = true;
                         consolePrinter("Your IP address has been compromised! Hurry up!", Color.red);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
@@ -179,27 +182,33 @@ namespace TwoDesperadosTest
 
                         consolePrinter("Spam node hacked! Recalculating Node hacking difficulties...", Color.green);
                         
-                        //recalculate cheapest paths from firewalls
-                        networkConfigurator.firewallNodes.ForEach(firewallNode =>
-                        {
-                            List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
-
-                            firewallTracerPathMap[firewallNode].Value.Clear();
-                            cheapestPathToStart.ForEach(node => firewallTracerPathMap[firewallNode].Value.Add(node));
-                        });
-                        
+                        //decrease tracers speed
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
-                        {
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
-                            tracerPair.Value.Key.SetTracePath(tracerPair.Value.Value);
-                        }
 
+                        if (!hackingDetectedHelperFlag)
+                        {
+                            //recalculate cheapest paths from firewalls
+                            foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
+                            {
+                                NetworkNode firewallNode = tracerPair.Key;
+
+                                List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
+
+                                firewallTracerPathMap[firewallNode].Value.Clear();
+                                cheapestPathToStart.ForEach(node => firewallTracerPathMap[firewallNode].Value.Add(node));
+
+                                //set cheapest path to tracer
+                                tracerPair.Value.Key.SetTracePath(tracerPair.Value.Value);
+                            }
+                        }
+                        
                         consolePrinter("Node hacking difficulties recalculated!", Color.green);
 
                     })
                     .SetSpamNodeNukedAction(decreaseTracerSpeedPercent => {
 
-                        consolePrinter("Spam node nuked! They dont even know what hit them!", Color.green);
+                        consolePrinter("Spam node nuked! They dont know what hit them!", Color.green);
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
@@ -209,7 +218,11 @@ namespace TwoDesperadosTest
 
                         actionPanel.transform.SetAsLastSibling();
                         actionPanel.SetActive(true);    
-                        actionPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(node.GetPosition().x + 35, node.GetPosition().y);
+                        actionPanel.GetComponent<RectTransform>().anchoredPosition = 
+                            new Vector2(
+                                node.GetPosition().x < graphContainer.sizeDelta.x / 2 ? node.GetPosition().x + 50 : node.GetPosition().x - 50 , 
+                                node.GetPosition().y < graphContainer.sizeDelta.y / 2 ? node.GetPosition().y + 50 : node.GetPosition().y - 50
+                                );
                         Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
                         
                         foreach (Button butt in buttons)//TODO fix
@@ -293,7 +306,7 @@ namespace TwoDesperadosTest
 
             RectTransform nodeTransform = nodeObject.GetComponent<RectTransform>();
             nodeTransform.anchoredPosition = node.GetPosition();
-            nodeTransform.sizeDelta = new Vector2(20, 20);
+            nodeTransform.sizeDelta = new Vector2(15, 15);
             nodeTransform.anchorMin = new Vector2(0, 0);
             nodeTransform.anchorMax = new Vector2(0, 0);
             nodeTransform.SetAsLastSibling();

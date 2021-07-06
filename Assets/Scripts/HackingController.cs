@@ -406,27 +406,5 @@ namespace TwoDesperadosTest
             });
         }
 
-        //DEBUG 
-        private void PrintNodeStructures()
-        {
-            Debug.Log("Undiscovered:");
-            foreach (NetworkNode node in undiscoveredNodes)
-            {
-                Debug.LogFormat("Node: {0}", node.ToString());
-            }
-
-            Debug.Log("Discovered:");
-            foreach (NetworkNode node in discoveredNodes)
-            {
-                Debug.LogFormat("Node: {0}", node.ToString());
-            }
-
-            Debug.Log("Available to Hack:");
-            foreach (KeyValuePair<NetworkNode, NetworkNode> node in nodesToHack)
-            {
-                Debug.LogFormat("Node: {0}", node.ToString());
-            }
-        }
-
     }
 }

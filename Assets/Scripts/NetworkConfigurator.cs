@@ -110,7 +110,7 @@ namespace TwoDesperadosTest
                 
                 int row = randomNoGenerator.Next(0, numberOfNodes);
                 int column = randomNoGenerator.Next(0, numberOfNodes);
-
+                
                 // get random field repeatedly until a free field is found
                 while (rowNodeCount[row] > 1 || columnNodeCount[column] >  1 || nodePresenceMatrix[row, column]) 
                 {

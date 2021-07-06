@@ -31,7 +31,7 @@ namespace TwoDesperadosTest
             this.position = position;
             this.type = type;
             this.hackingDificulty = 3;
-            this.tracerDelay = 1;
+            this.tracerDelay = 2;
             links = new List<Link>();
         }
         

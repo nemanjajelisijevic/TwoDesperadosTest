@@ -11,6 +11,7 @@ namespace TwoDesperadosTest
         private LinkAnimator tracerAnimator;
         private TimeoutWaiter timeoutWaiter;
         private Queue<NetworkNode> traceQueue;
+        private NetworkNode currentTracingNode = null;
 
         private float tracingSpeedModifier = 1f;
         private bool blocked;
@@ -24,6 +25,7 @@ namespace TwoDesperadosTest
         {
             this.tracerAnimator = linkAnimator;
             this.timeoutWaiter = timeoutWaiter;
+            this.traceQueue = new Queue<NetworkNode>();
             this.blocked = false;
         }
 
@@ -43,9 +45,28 @@ namespace TwoDesperadosTest
 
         public TracerController SetTracePath(List<NetworkNode> tracePath)
         {
-            this.traceQueue = new Queue<NetworkNode>();
-            tracePath.ForEach(node => traceQueue.Enqueue(node));
+            if (traceQueue.Count > 1) //protection against tracing the last node 
+            {
+                traceQueue.Clear();
+                tracePath.ForEach(node => traceQueue.Enqueue(node));
+            }
             return this;
+        }
+
+        //returns null
+        public NetworkNode GetCurrentTracingNode()
+        {
+            if (traceQueue.Count > 0)
+                return traceQueue.Peek();
+            else
+                return null;
+        }
+        
+        public bool IsRunning()
+        {
+            if (!blocked && traceQueue.Count > 0)
+                return true;
+            else return false;
         }
 
         public void BlockTracer()
@@ -65,7 +86,7 @@ namespace TwoDesperadosTest
                 return;
             }
 
-            traceQueue = new Queue<NetworkNode>();
+            traceQueue.Clear();
 
             tracePath.ForEach(node => traceQueue.Enqueue(node));
 
@@ -76,9 +97,11 @@ namespace TwoDesperadosTest
 
                 if (blocked)
                     return;
-
+                
                 if (traceQueue.Count > 1)
                 {
+                    consoleLog(String.Format("Tracer continued..."));
+
                     tracerAnimator
                         .SetStartPoint(traceQueue.Dequeue().GetPosition())
                         .SetEndPoint(traceQueue.Peek().GetPosition())
@@ -87,8 +110,6 @@ namespace TwoDesperadosTest
                             int tracerDelay = traceQueue.Peek().GetTracerDelay();
                             consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
                             timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                            if (traceQueue.Count > 1)
-                                consoleLog(String.Format("Tracer continued..."));
                         });
                 }
                 else
@@ -104,8 +125,6 @@ namespace TwoDesperadosTest
                     int tracerDelay = traceQueue.Peek().GetTracerDelay();
                     consoleLog(String.Format("Tracer delayed for {0} secs", tracerDelay));
                     timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                    if (traceQueue.Count > 1)
-                        consoleLog(String.Format("Tracer continued..."));
                 });
         }
         
