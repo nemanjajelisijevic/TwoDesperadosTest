@@ -23,7 +23,7 @@ namespace TwoDesperadosTest
         public List<NetworkNode> spamNodes;
         
         //disconnect dense links attribute
-        public static float disconnectionLinksAngle = 15f;
+        public static float disconnectionLinksAngle = 12f;
 
         public class NetworkConfiguration
         {
