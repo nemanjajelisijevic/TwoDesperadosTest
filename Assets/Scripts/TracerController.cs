@@ -24,6 +24,8 @@ namespace TwoDesperadosTest
 
         public Action<string> consoleLog = null;
 
+        private List<GameObject> tracedLinkGameObjects;
+
         public TracerController(LinkAnimator linkAnimator, TimeoutWaiter timeoutWaiter)
         {
             tracerCount++;
@@ -33,6 +35,12 @@ namespace TwoDesperadosTest
             this.tracingSpeedModifier = 1f;
             this.traceQueue = new Queue<NetworkNode>();
             this.blocked = false;
+            this.tracedLinkGameObjects = new List<GameObject>();
+        }
+
+        public int GetTracerNumber()
+        {
+            return tracerNumber;
         }
 
         //trace complete action setter
@@ -46,7 +54,7 @@ namespace TwoDesperadosTest
         public static void ValidateTracerDecreaseSpeed(int percent)
         {
             if (percent < 1 || percent > 99)
-                throw new ArgumentException(String.Format("Decrease tracer speed percent must be > 1 && < 100"));
+                throw new ArgumentException(String.Format("Decrease tracer speed percent must be >= 1 && < 100"));
         }
 
         public TracerController DecreaseTracerSpeed(int percent)
@@ -56,21 +64,15 @@ namespace TwoDesperadosTest
             float newPercent = 100 - percent;
             tracingSpeedModifier = newPercent / 100f;
 
-            //if (IsActive()) 
-            //    tracerAnimator.SetHackingDuration(traceQueue.Peek().GetHackingDuration() / tracingSpeedModifier);
+            if (tracingSpeedModifier >= 1)
+                throw new Exception(string.Format("tracingSpeedModifier >= 1. Actual: {0}", tracingSpeedModifier));
+
+
+            Debug.LogFormat("Tracer Controller - tracingSpeedModifier: {0}", tracingSpeedModifier);
+
             return this;
         }
 
-        public TracerController SetTracePath(List<NetworkNode> tracePath)
-        {
-            if (traceQueue.Count > 1) //protection against tracing the last node 
-            {
-                traceQueue.Clear();
-                tracePath.ForEach(node => traceQueue.Enqueue(node));
-            }
-            return this;
-        }
-                                                                                                                                                          
         //returns null
         public NetworkNode GetCurrentTracingNode()
         {
@@ -84,7 +86,8 @@ namespace TwoDesperadosTest
         {
             if (!blocked && traceQueue.Count > 0)
                 return true;
-            else return false;
+            else
+                return false;
         }
 
         public void BlockTracer()
@@ -92,7 +95,12 @@ namespace TwoDesperadosTest
             blocked = true;
             tracerAnimator.Stop();
         }
-        
+
+        public List<GameObject> GetTracedLinkGameObjects()
+        {
+            return tracedLinkGameObjects;
+        }
+
         //API method
         public void TraceHackingSignal(List<NetworkNode> tracePath)
         {
@@ -104,6 +112,9 @@ namespace TwoDesperadosTest
                 return;
             }
 
+            if (tracePath.Count < 2)
+                throw new ArgumentException(String.Format("Trace path size sholud not be less than 2. Actual size: {0}", tracePath.Count));
+
             traceQueue.Clear();
 
             tracePath.ForEach(node => traceQueue.Enqueue(node));
@@ -114,36 +125,43 @@ namespace TwoDesperadosTest
             {
 
                 if (blocked)
+                {
+                    if (consoleLog != null)
+                        consoleLog(String.Format("Tracer {0} is blocked!", tracerNumber));
                     return;
-                
+                }
+
                 if (traceQueue.Count > 1)
                 {
-                    consoleLog(String.Format("Tracer {0] continued...", tracerNumber));
+                    consoleLog(String.Format("Tracer {0} continued...", tracerNumber));
 
-                    tracerAnimator
-                        .SetStartPoint(traceQueue.Dequeue().GetPosition())
-                        .SetEndPoint(traceQueue.Peek().GetPosition())
-                        .SetHackingDuration(traceQueue.Peek().GetHackingDuration() / tracingSpeedModifier)
-                        .Start(() => {
-                            int tracerDelay = traceQueue.Peek().GetTracerDelay();
-                            consoleLog(String.Format("Tracer {0} delayed for {1} secs", tracerNumber, tracerDelay));
-                            timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                        });
+                    tracedLinkGameObjects.Add(
+                        tracerAnimator
+                            .SetStartPoint(traceQueue.Dequeue().GetPosition())
+                            .SetEndPoint(traceQueue.Peek().GetPosition())
+                            .SetHackingDuration(traceQueue.Peek().GetHackingDuration() / tracingSpeedModifier)
+                            .Start(() =>
+                            {
+                                int tracerDelay = traceQueue.Peek().GetTracerDelay();
+                                consoleLog(String.Format("Tracer {0} delayed for {1} secs on {2} node", tracerNumber, tracerDelay, traceQueue.Peek().GetNodeType()));
+                                timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
+                            }));
                 }
                 else
                     traceCompletedAction();
             };
-            
-            tracerAnimator
-                .SetLinkColor(Color.red)
-                .SetStartPoint(firstNode.GetPosition())
-                .SetEndPoint(traceQueue.Peek().GetPosition())
-                .SetHackingDuration(traceQueue.Peek().GetHackingDuration() / tracingSpeedModifier)
-                .Start(() => {
-                    int tracerDelay = traceQueue.Peek().GetTracerDelay();
-                    consoleLog(String.Format("Tracer {0} delayed for {1} secs", tracerNumber, tracerDelay));
-                    timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
-                });
+
+            tracedLinkGameObjects.Add(
+                tracerAnimator
+                    .SetLinkColor(Color.red)
+                    .SetStartPoint(firstNode.GetPosition())
+                    .SetEndPoint(traceQueue.Peek().GetPosition())
+                    .SetHackingDuration(traceQueue.Peek().GetHackingDuration() / tracingSpeedModifier)
+                    .Start(() => {
+                        int tracerDelay = traceQueue.Peek().GetTracerDelay();
+                        consoleLog(String.Format("Tracer {0} delayed for {1} secs on {2} node", tracerNumber, tracerDelay, traceQueue.Peek().GetNodeType()));
+                        timeoutWaiter.Wait(tracerDelay, nodeTraceAction);
+                    }));
         }
         
     }

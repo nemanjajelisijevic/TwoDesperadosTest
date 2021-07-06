@@ -75,8 +75,6 @@ namespace TwoDesperadosTest
                 
                 foreach (NetworkNodeWrapper adjNodeWrapper in adjacentNodes)
                 {
-                    Debug.Log(adjNodeWrapper);
-
                     if (!visitedNodes.Contains(adjNodeWrapper))
                     {
                         CalculateMinDiffPathToNode(adjNodeWrapper, currentNode);

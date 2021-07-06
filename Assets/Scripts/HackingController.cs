@@ -70,7 +70,9 @@ namespace TwoDesperadosTest
 
         //protection aganist simultanious API calls
         private bool hackingInProgress;
-        
+
+        private bool detected;
+
         public Action<string> consoleLog = null;
 
         public HackingController(
@@ -125,6 +127,8 @@ namespace TwoDesperadosTest
             randomGenerator = new System.Random();
 
             hackingInProgress = false;
+
+            detected = false;
 
             //TODO debug
             //PrintNodeStructures();
@@ -258,6 +262,7 @@ namespace TwoDesperadosTest
                         {
                             node.NeutralizeFirewall();
                             firewallHackedActon(node);
+                            
                             CalculateHackingDetection(node);
                         }
                         else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))
@@ -270,7 +275,12 @@ namespace TwoDesperadosTest
                                 nodeToHack.Key.SetHackingDifficulty(randomGenerator.Next(NetworkNode.MINIMUM_HACKING_DIFFICULTY, 101));
 
                             spamNodeHackedAction(tracerSpeedDecrease);
-                            hackingDetectedAction();
+
+                            if (!detected)
+                            {
+                                SetDetected();
+                                hackingDetectedAction();
+                            }
                         }
                         else if (node.GetNodeType().Equals(NetworkNode.Type.Data))
                         {
@@ -361,9 +371,14 @@ namespace TwoDesperadosTest
         {
             if (trapsCount > 0 && discoveredNodes.Contains(node))
             {
-                node.SetTracerDelay(trapDelay);
+                node.SetTracerDelay(node.GetTracerDelay() + trapDelay);
                 updateRewardAction(Reward.Trap, --trapsCount);
             }
+        }
+
+        private void SetDetected()
+        {
+            this.detected = true;
         }
 
         public void BlockSignal()
@@ -374,8 +389,9 @@ namespace TwoDesperadosTest
 
         private void CalculateHackingDetection(NetworkNode node)
         {
-            if ((randomGenerator.Next(0, 101) < (node.GetHackingDifficulty() / NetworkNode.MINIMUM_HACKING_DIFFICULTY)))
+            if (!detected && (randomGenerator.Next(0, 101) < (node.GetHackingDifficulty() / NetworkNode.MINIMUM_HACKING_DIFFICULTY)))
             {
+                SetDetected();
                 hackingDetectedAction();
             }
         }

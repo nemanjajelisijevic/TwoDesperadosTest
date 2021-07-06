@@ -51,13 +51,13 @@ namespace TwoDesperadosTest
         
         private void Awake()
         {            
-            int noOfNodes = 18;
+            int noOfNodes = 20;
             int noOfTreasureNodes = 3;
             int noOfFirewallNodes = 3;
             int noOfSpamNodes = 4;
 
             int xp = 0;
-            int tracerSpeedDecrease = 50;
+            int tracerSpeedDecrease = 30;
             int trapDelay = 10;
             
             graphContainer = transform.Find("GraphContainer").GetComponent<RectTransform>();
@@ -160,11 +160,16 @@ namespace TwoDesperadosTest
 
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                             tracerPair.Value.Key.TraceHackingSignal(tracerPair.Value.Value);
-
                     })
                     .SetFirewallHackedAction(firewallNode => {
-                        consolePrinter("Firewall system hacked. Good job!", Color.green);
+
+                        consolePrinter(String.Format("Firewall system {0} hacked. Good job!", firewallTracerPathMap[firewallNode].Key.GetTracerNumber()), Color.green);
+
+                        //block hacked firewall tracer
                         firewallTracerPathMap[firewallNode].Key.BlockTracer();
+
+                        //destroy traced link UI objects
+                        firewallTracerPathMap[firewallNode].Key.GetTracedLinkGameObjects().ForEach(linkGameObject => Destroy(linkGameObject));
                     })
                     .SetUpdateRewardAction((reward, count) => {
 
@@ -177,36 +182,36 @@ namespace TwoDesperadosTest
                     .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
                     .SetSpamNodeHackedAction(decreaseTracerSpeedPercent => { 
 
-                        consolePrinter("Spam node hacked! Recalculating Node hacking difficulties...", Color.green);
-
-                        bool tracersActive = false; 
-
+                        consolePrinter("Spam node hacked! Recalculated Node hacking difficulties...", Color.green);
+                        
                         //decrease tracers speed
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
-                        {
                             tracerPair.Value.Key.DecreaseTracerSpeed(decreaseTracerSpeedPercent);
-                            tracersActive = tracerPair.Value.Key.IsActive();
-                        }
                         
-                        if (!tracersActive)
+                        //recalculate cheapest paths from firewalls
+                        foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                         {
-                            //recalculate cheapest paths from firewalls
-                            foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
+                            if (!tracerPair.Value.Key.IsActive())
                             {
+                                Debug.Log(string.Format("Tracer {0} inactive!", tracerPair.Value.Key.GetTracerNumber()));
                                 NetworkNode firewallNode = tracerPair.Key;
+                                //NetworkNode currentTracingNode = tracerPair.Value.Key.IsActive() ? tracerPair.Value.Key.GetCurrentTracingNode() : firewallNode;
 
                                 List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
 
+                                Debug.Log(string.Format("Tracer {0} Cheapest path:", tracerPair.Value.Key.GetTracerNumber()));
                                 firewallTracerPathMap[firewallNode].Value.Clear();
-                                cheapestPathToStart.ForEach(node => firewallTracerPathMap[firewallNode].Value.Add(node));
-
-                                //set cheapest path to tracer
-                                tracerPair.Value.Key.SetTracePath(tracerPair.Value.Value);
+                                cheapestPathToStart.ForEach(node => {
+                                    firewallTracerPathMap[firewallNode].Value.Add(node);
+                                    Debug.LogFormat("   {0}", node.ToString());
+                                });
+                                
+                                consolePrinter(String.Format("Tracer {0} recalculated to start.", tracerPair.Value.Key.GetTracerNumber()), Color.green);
                             }
+                            else
+                                Debug.Log(string.Format("Tracer {0} active!", tracerPair.Value.Key.GetTracerNumber()));
                         }
                         
-                        consolePrinter("Node hacking difficulties recalculated!", Color.green);
-
                     })
                     .SetSpamNodeNukedAction(decreaseTracerSpeedPercent => {
 
@@ -269,7 +274,9 @@ namespace TwoDesperadosTest
                 hackingController.consoleLog = message => consolePrinter(message, Color.green);
                 foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> entry in firewallTracerPathMap)
                     entry.Value.Key.consoleLog = message => consolePrinter(message, Color.red);
-                
+
+
+                consolePrinter(String.Format("Start node hacking difficulty: {0}. Keep it safe :)", networkConfigurator.startNode.GetHackingDifficulty()), Color.green);
             }
             catch (Exception e)
             {

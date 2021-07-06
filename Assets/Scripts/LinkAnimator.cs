@@ -7,8 +7,8 @@ namespace TwoDesperadosTest
 {
     public class LinkAnimator
     {
-        private Vector2 start;
-        private Vector2 end;
+        private Vector2 startPoint;
+        private Vector2 endPoint;
         private Color color;
 
         private RectTransform gameObjectContainer;
@@ -32,22 +32,22 @@ namespace TwoDesperadosTest
         {
             gameObjectContainer = container;
             this.coroutineHolder = coroutineHolder;
-            this.color = Color.black;
-            this.start = new Vector2();
-            this.end = new Vector2();
-            this.duration = 5f;
+            this.color = Color.white;
+            this.startPoint = new Vector2();
+            this.endPoint = new Vector2();
+            this.duration = 1f;
             this.running = false;
         }
 
         public LinkAnimator SetStartPoint(Vector2 start)
         {
-            this.start = new Vector2(start.x, start.y);
+            this.startPoint = new Vector2(start.x, start.y);
             return this;
         }
 
         public LinkAnimator SetEndPoint(Vector2 end)
         {
-            this.end = new Vector2(end.x, end.y);
+            this.endPoint = new Vector2(end.x, end.y);
             return this;
         }
 
@@ -61,6 +61,7 @@ namespace TwoDesperadosTest
         {
             if (durationInSecs < .1f)
                 throw new ArgumentException(String.Format("Duration must be > 0.1 secs. Passed: {0}", durationInSecs));
+
             this.duration = durationInSecs;
             this.stepLength = totalDistance / (duration * 10);
             return this;
@@ -82,8 +83,8 @@ namespace TwoDesperadosTest
                 return null;
 
             currentDistance = 0f;
-            totalDistance = Vector2.Distance(start, end);
-            dir = (end - start).normalized;
+            totalDistance = Vector2.Distance(startPoint, endPoint);
+            dir = (endPoint - startPoint).normalized;
             
             stepLength = totalDistance / (duration * 10);
 
@@ -95,7 +96,7 @@ namespace TwoDesperadosTest
             lineTransform.anchorMin = new Vector2(0, 0);
             lineTransform.anchorMax = new Vector2(0, 0);
             lineTransform.sizeDelta = new Vector2(currentDistance, 3f); ;
-            lineTransform.anchoredPosition = start + dir * currentDistance * 0.5f;
+            lineTransform.anchoredPosition = startPoint + dir * currentDistance * 0.5f;
 
             lineTransform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
 
@@ -119,6 +120,8 @@ namespace TwoDesperadosTest
 
         private IEnumerator DrawLineRoutine(Action action)
         {
+            Vector2 start = new Vector2(this.startPoint.x, this.startPoint.y); // local variable for race condition avoidance
+
             while (currentDistance < totalDistance)
             {
                 if (interrupted)
