@@ -199,7 +199,7 @@ namespace TwoDesperadosTest
             }
             else if (discoveredNodes.Contains(node) && trapsCount > 0)
             {
-                attackChoiceAction(node, string.Empty, string.Empty, trapsCount > 0 ? SET_TRAP : string.Empty, - 1);
+                attackChoiceAction(node, string.Empty, string.Empty, trapsCount > 0 ? SET_TRAP : string.Empty, node.GetHackingDifficulty());
             }
             else if (nodesToHack.ContainsKey(node))
             {

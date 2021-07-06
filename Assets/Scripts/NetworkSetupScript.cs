@@ -237,19 +237,27 @@ namespace TwoDesperadosTest
                             {
                                 if (!hackText.Equals(string.Empty))
                                 {
-                                    butt.enabled = true;
+                                    butt.GetComponentInChildren<Text>().color = Color.green;
                                     butt.onClick.AddListener(() => { hackingController.HackNode(node); actionPanel.SetActive(false); });
                                 }
+                                else
+                                    butt.GetComponentInChildren<Text>().color = Color.red;
                             } 
                             else if (butt.name == "Nuke")
                             {
                                 if (!nukeText.Equals(string.Empty))
-                                    butt.onClick.AddListener(() => { hackingController.NukeNode(node); actionPanel.SetActive(false);});
+                                {
+                                    butt.GetComponentInChildren<Text>().color = Color.green;
+                                    butt.onClick.AddListener(() => { hackingController.NukeNode(node); actionPanel.SetActive(false); });
+                                }
+                                else
+                                    butt.GetComponentInChildren<Text>().color = Color.red;
                             }
                             else if (butt.name == "Trap")
                             {
                                 if (!trapText.Equals(string.Empty))
                                 {
+                                    butt.GetComponentInChildren<Text>().color = Color.green;
                                     butt.onClick.AddListener(() => {
                                         nodeToButtonMap[node].GetComponent<Image>().color = Color.magenta;
                                         consolePrinter("Trap kit set!", Color.green);
@@ -257,6 +265,8 @@ namespace TwoDesperadosTest
                                         actionPanel.SetActive(false);
                                     });
                                 }
+                                else
+                                    butt.GetComponentInChildren<Text>().color = Color.red;
                             }
                             else if (butt.name == "Close")
                             {

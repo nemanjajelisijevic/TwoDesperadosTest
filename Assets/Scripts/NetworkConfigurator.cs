@@ -22,6 +22,8 @@ namespace TwoDesperadosTest
         public List<NetworkNode> treasureNodes;
         public List<NetworkNode> spamNodes;
         
+        //disconnect dense links attribute
+        public static float disconnectionLinksAngle = 15f;
 
         public class NetworkConfiguration
         {
@@ -196,12 +198,11 @@ namespace TwoDesperadosTest
                         continue;
 
                     float angle = Link.GetAngleBetweenLinks(links[k], links[i]);
-                    float angleDiff = 10f;
 
                     if ((links[k].IsConnectedToNode(links[i].GetNodes().Key) || (links[k].IsConnectedToNode(links[i].GetNodes().Value)))
                         && links[i].GetNodes().Key.GetNoOfLinks() > 1
                         && links[i].GetNodes().Value.GetNoOfLinks() > 1
-                        && (angle < angleDiff))//|| angle > (360f - angleDiff)))
+                        && (angle < disconnectionLinksAngle))//|| angle > (360f - angleDiff)))
                     {
                         Link longer = links[k].GetLinkLength() >= links[i].GetLinkLength() ? links[k] : links[i];
 
@@ -214,11 +215,10 @@ namespace TwoDesperadosTest
 
             }
             
+            //disconnect links
             linksToDisconnect.ForEach(link => {
-                
                 link.Disconnect();
                 links.Remove(link);
-                
             });
             
         }

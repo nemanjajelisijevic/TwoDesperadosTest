@@ -63,13 +63,7 @@ namespace TwoDesperadosTest
 
             float newPercent = 100 - percent;
             tracingSpeedModifier = newPercent / 100f;
-
-            if (tracingSpeedModifier >= 1)
-                throw new Exception(string.Format("tracingSpeedModifier >= 1. Actual: {0}", tracingSpeedModifier));
-
-
-            Debug.LogFormat("Tracer Controller - tracingSpeedModifier: {0}", tracingSpeedModifier);
-
+            
             return this;
         }
 
