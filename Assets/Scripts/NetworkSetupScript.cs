@@ -193,23 +193,18 @@ namespace TwoDesperadosTest
                         {
                             if (!tracerPair.Value.Key.IsActive())
                             {
-                                Debug.Log(string.Format("Tracer {0} inactive!", tracerPair.Value.Key.GetTracerNumber()));
                                 NetworkNode firewallNode = tracerPair.Key;
                                 //NetworkNode currentTracingNode = tracerPair.Value.Key.IsActive() ? tracerPair.Value.Key.GetCurrentTracingNode() : firewallNode;
 
                                 List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
-
-                                Debug.Log(string.Format("Tracer {0} Cheapest path:", tracerPair.Value.Key.GetTracerNumber()));
+                                
                                 firewallTracerPathMap[firewallNode].Value.Clear();
-                                cheapestPathToStart.ForEach(node => {
-                                    firewallTracerPathMap[firewallNode].Value.Add(node);
-                                    Debug.LogFormat("   {0}", node.ToString());
-                                });
+                                cheapestPathToStart.ForEach(node => firewallTracerPathMap[firewallNode].Value.Add(node));
                                 
                                 consolePrinter(String.Format("Tracer {0} recalculated to start.", tracerPair.Value.Key.GetTracerNumber()), Color.green);
                             }
-                            else
-                                Debug.Log(string.Format("Tracer {0} active!", tracerPair.Value.Key.GetTracerNumber()));
+                            //else
+                            //    Debug.Log(string.Format("Tracer {0} active!", tracerPair.Value.Key.GetTracerNumber()));
                         }
                         
                     })

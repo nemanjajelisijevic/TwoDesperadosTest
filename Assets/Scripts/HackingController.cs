@@ -276,7 +276,7 @@ namespace TwoDesperadosTest
 
                             spamNodeHackedAction(tracerSpeedDecrease);
 
-                            if (!detected)
+                            if (!detected) //call hacking detedted only once
                             {
                                 SetDetected();
                                 hackingDetectedAction();
