@@ -9,6 +9,32 @@ namespace TwoDesperadosTest
     public class NetworkConfigurator
     {
 
+        public class ConfigInput
+        {
+            public int nodeCount { get; }
+            public int treasureCount { get; }
+            public int firewallCount { get; }
+            public int spamCount { get; }
+            public int spamDecrease { get; }
+            public int trapDelay { get; }
+
+            public ConfigInput(
+                int nodeCount,
+                int treasureCount,
+                int firewallCount,
+                int spamCount,
+                int spamDecrease,
+                int trapDelay)
+            {
+                this.nodeCount = nodeCount;
+                this.treasureCount = treasureCount;
+                this.firewallCount = firewallCount;
+                this.spamCount = spamCount;
+                this.spamDecrease = spamDecrease;
+                this.trapDelay = trapDelay;
+            }
+        }
+
         private const int numberOfStartNodes = 1;
 
         private Dictionary<NetworkNode.Type, int> nodeTypeAmount;
@@ -53,18 +79,18 @@ namespace TwoDesperadosTest
                 throw new ArgumentException(String.Format("Invalid number of spam nodes. Min 1, max {0}", noOfNodes - numberOfStartNodes - noOfTreasures - noOfFirewalls - 1));
         }
 
-        public NetworkConfigurator(int noOfNodes, int noOfTreasures, int noOfFirewalls, int noOfSpams, ILinkGenerator linkGenerator)
+        public NetworkConfigurator(ConfigInput configInput, ILinkGenerator linkGenerator)
         {
             // validate params and throw errors
-            ValidateNodeTypeAmounts(noOfNodes, noOfTreasures, noOfFirewalls, noOfSpams);
+            ValidateNodeTypeAmounts(configInput.nodeCount, configInput.treasureCount, configInput.firewallCount, configInput.spamCount);
 
             nodeTypeAmount = new Dictionary<NetworkNode.Type, int>();
 
-            nodeTypeAmount.Add(NetworkNode.Type.Data, noOfNodes);
+            nodeTypeAmount.Add(NetworkNode.Type.Data, configInput.nodeCount);
             nodeTypeAmount.Add(NetworkNode.Type.Start, numberOfStartNodes);
-            nodeTypeAmount.Add(NetworkNode.Type.Treasure, noOfTreasures);
-            nodeTypeAmount.Add(NetworkNode.Type.Firewall, noOfFirewalls);
-            nodeTypeAmount.Add(NetworkNode.Type.Spam, noOfSpams);
+            nodeTypeAmount.Add(NetworkNode.Type.Treasure, configInput.treasureCount);
+            nodeTypeAmount.Add(NetworkNode.Type.Firewall, configInput.firewallCount);
+            nodeTypeAmount.Add(NetworkNode.Type.Spam, configInput.spamCount);
 
             firewallNodes = new List<NetworkNode>();
             treasureNodes = new List<NetworkNode>();

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using System;
 
 
@@ -24,10 +25,15 @@ namespace TwoDesperadosTest
         public Text ConsoleBeforelast;
         [SerializeField]
         public Text ConsoleTwoBeforeLast;
+        
+        public static NetworkConfigurator.ConfigInput configInput;
 
         private Action<String, Color> consolePrinter = null;
         
         private RectTransform graphContainer;
+
+        public static NetworkConfigurator.NetworkConfiguration networkConf;
+        public static bool tryAgain = false;
 
         private NetworkConfigurator networkConfigurator;
         private HackingController hackingController;
@@ -40,6 +46,7 @@ namespace TwoDesperadosTest
         private Dictionary<NetworkNode, GameObject> nodeToButtonMap;
 
         public GameObject actionPanel;
+        public GameObject endPanel;
 
         //ui text templates
         private const string xpUiTemplate = "var xp = {0};";
@@ -48,19 +55,59 @@ namespace TwoDesperadosTest
         private const string consoleUiTemplate = "root@hacker.org:~# ";
 
         private const float padding = 10f;
+
+        private const string PP_XP = "xp";
+        private const string PP_NUKES = "nukes";
+        private const string PP_TRAPS = "traps";
+
+        private void SaveXpPowerUps(int xp, int nukesCount, int trapsCount)
+        {
+            PlayerPrefs.SetInt(PP_XP, xp);
+            PlayerPrefs.SetInt(PP_NUKES, nukesCount);
+            PlayerPrefs.SetInt(PP_TRAPS, trapsCount);
+            PlayerPrefs.Save();
+        }
+
+        private void ShowEndPanel()
+        {
+            endPanel.transform.SetAsLastSibling();
+            endPanel.SetActive(true);
+        }
+
+        //end panel functions
+        public void OnTryAgain()
+        {
+            SceneManager.LoadScene("HackingGameScene");
+            NetworkSetupScript.tryAgain = true;
+        }
+
+        public void OnGenerateNewLevel()
+        {
+            SceneManager.LoadScene("HackingGameScene");
+            NetworkSetupScript.tryAgain = false;
+        }
+
+        public void OnMainMenu()
+        {
+            SceneManager.LoadScene("Menu");
+        }
         
         private void Awake()
-        {            
-            int noOfNodes = 20;
-            int noOfTreasureNodes = 3;
-            int noOfFirewallNodes = 3;
-            int noOfSpamNodes = 4;
+        {   
 
-            int xp = 0;
-            int tracerSpeedDecrease = 30;
-            int trapDelay = 10;
+            int xp = PlayerPrefs.GetInt(PP_XP);
+            int nukes = PlayerPrefs.GetInt(PP_NUKES);
+            int traps = PlayerPrefs.GetInt(PP_TRAPS);
+
+            int tracerSpeedDecrease = configInput.spamDecrease;
+            int trapDelay = configInput.trapDelay;
             
             graphContainer = transform.Find("GraphContainer").GetComponent<RectTransform>();
+
+            //xp, nuke, trap ui init
+            XP_ui.text = String.Format(xpUiTemplate, xp);
+            Nuke_ui.text = String.Format(nukesUiTemplate, nukes);
+            Trap_ui.text = String.Format(trapsUiTemplate, traps);
 
             //console init
             ConsoleTwoBeforeLast.text = consoleUiTemplate;
@@ -102,10 +149,11 @@ namespace TwoDesperadosTest
 
             try
             {
-                networkConfigurator = new NetworkConfigurator(noOfNodes, noOfTreasureNodes, noOfFirewallNodes, noOfSpamNodes, new IncrementalTriangulationLinkGenerator());
+                networkConfigurator = new NetworkConfigurator(configInput, new IncrementalTriangulationLinkGenerator());
                 
-                NetworkConfigurator.NetworkConfiguration networkConf 
-                    = networkConfigurator.ConfigureNetwork(graphContainer.sizeDelta.x - padding, graphContainer.sizeDelta.y - padding);
+
+                if (!tryAgain)
+                    networkConf = networkConfigurator.ConfigureNetwork(graphContainer.sizeDelta.x - padding, graphContainer.sizeDelta.y - padding);
 
                 networkConf.links.ForEach(edge => DrawLink(edge));
                 networkConf.nodes.ForEach(node => {
@@ -116,8 +164,10 @@ namespace TwoDesperadosTest
                 //init controllers
                 hackingController = new HackingController(
                     networkConf.nodes, 
-                    networkConfigurator.treasureNodes.Count, 
+                    configInput.treasureCount, 
                     xp, 
+                    nukes,
+                    traps,
                     tracerSpeedDecrease, 
                     trapDelay, 
                     new LinkAnimator(graphContainer, this));
@@ -137,6 +187,10 @@ namespace TwoDesperadosTest
                             hackingController.BlockSignal();
                             foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                                 tracerPair.Value.Key.BlockTracer();
+
+                            //GAME OVER
+                            SaveXpPowerUps(hackingController.xp, hackingController.nukesCount, hackingController.trapsCount);
+                            ShowEndPanel();
                         });
 
                     firewallTracerPathMap.Add(
@@ -152,6 +206,10 @@ namespace TwoDesperadosTest
                         consolePrinter("Wow! Nice skills. Do you want a job?", Color.green);
                         foreach (KeyValuePair<NetworkNode, KeyValuePair<TracerController, List<NetworkNode>>> tracerPair in firewallTracerPathMap)
                             tracerPair.Value.Key.BlockTracer();
+
+                        //GAME OVER
+                        SaveXpPowerUps(hackingController.xp, hackingController.nukesCount, hackingController.trapsCount);
+                        ShowEndPanel();
                     })
                     .SetDrawNukedLinkAction((start, end, color) => DrawLink(start, end, color))
                     .SetHackingDetectedAction(() => {
@@ -286,9 +344,8 @@ namespace TwoDesperadosTest
                 consolePrinter("Init error...", Color.red);
             }
         }
-
-
-        //UI draw functions
+        
+        //Node and link draw functions
         private GameObject DrawNode(NetworkNode node)
         {
             GameObject nodeObject = new GameObject("node", typeof(Button));

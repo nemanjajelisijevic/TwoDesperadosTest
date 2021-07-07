@@ -32,11 +32,11 @@ namespace TwoDesperadosTest
         public const string SET_TRAP = "Set Trap";
 
         //aresnal counters
-        private int nukesCount;
-        private int trapsCount;
+        public int nukesCount { get; private set; }
+        public int trapsCount { get; private set; }
 
         //xp counter
-        private int xp;
+        public int xp { get; private set; }
 
         //Reward types
         public enum Reward
@@ -78,7 +78,9 @@ namespace TwoDesperadosTest
         public HackingController(
             List<NetworkNode> nodes, 
             int treasureNodesToHack, 
-            int xp, 
+            int xp,
+            int nukesCount,
+            int trapsCount,
             int tracerSpeedDecrease,
             int trapDelay,
             LinkAnimator linkAnimator)
@@ -95,8 +97,8 @@ namespace TwoDesperadosTest
 
             this.linkAnimator = linkAnimator;
 
-            nukesCount = 0;
-            trapsCount = 0;
+            this.nukesCount = nukesCount;
+            this.trapsCount = trapsCount;
             this.xp = xp;
             this.tracerSpeedDecrease = tracerSpeedDecrease;
             this.trapDelay = trapDelay;
