@@ -336,7 +336,7 @@ namespace TwoDesperadosTest
                     entry.Value.Key.consoleLog = message => consolePrinter(message, Color.red);
 
 
-                consolePrinter(String.Format("Start node hacking difficulty: {0}. Keep it safe :)", networkConfigurator.startNode.GetHackingDifficulty()), Color.green);
+                consolePrinter(String.Format("Start node hacking difficulty: {0}. Keep it safe :)", networkConf.startNode.GetHackingDifficulty()), Color.green);
             }
             catch (Exception e)
             {

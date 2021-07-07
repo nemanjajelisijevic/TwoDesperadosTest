@@ -55,6 +55,7 @@ namespace TwoDesperadosTest
         {
             public List<NetworkNode> nodes {get;}
             public List<Link> links { get; set; }
+            public NetworkNode startNode { get; set; }
 
             public NetworkConfiguration()
             {
@@ -154,7 +155,7 @@ namespace TwoDesperadosTest
 
                 if (nodeTypeAmount[NetworkNode.Type.Start] > 0)//TODO refactor
                 {
-                    startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
+                    ret.startNode = startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
                         .SetHackingDifficulty(hackingDiff);
                     ret.nodes.Add(startNode);
                     nodeTypeAmount[NetworkNode.Type.Start] = nodeTypeAmount[NetworkNode.Type.Start] - 1;
