@@ -86,6 +86,7 @@ namespace TwoDesperadosTest
         {
             SceneManager.LoadScene("HackingGameScene");
             NetworkSetupScript.tryAgain = false;
+            TracerController.tracerCount = 0;
         }
 
         public void OnMainMenu()
