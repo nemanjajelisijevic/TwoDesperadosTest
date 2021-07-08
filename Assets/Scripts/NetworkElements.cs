@@ -40,13 +40,6 @@ namespace TwoDesperadosTest
             return type;
         }
 
-        public NetworkNode NeutralizeFirewall()
-        {
-            if (type.Equals(Type.Firewall))
-                type = Type.Data;
-            return this;
-        }
-
         public NetworkNode SetHackingDifficulty(int difficulty)
         {
             if (difficulty < MINIMUM_HACKING_DIFFICULTY || difficulty > 100)

@@ -262,7 +262,7 @@ namespace TwoDesperadosTest
                         }
                         else if (node.GetNodeType().Equals(NetworkNode.Type.Firewall))
                         {
-                            node.NeutralizeFirewall();
+                            //node.NeutralizeFirewall();
                             firewallHackedActon(node);
                             
                             CalculateHackingDetection(node);
@@ -349,7 +349,7 @@ namespace TwoDesperadosTest
                 }
                 else if (node.GetNodeType().Equals(NetworkNode.Type.Firewall))
                 {
-                    node.NeutralizeFirewall();
+                    //node.NeutralizeFirewall();
                     firewallHackedActon(node);
                 }
                 else if (node.GetNodeType().Equals(NetworkNode.Type.Spam))

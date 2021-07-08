@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using TMPro;
@@ -55,13 +52,7 @@ namespace TwoDesperadosTest
             
             if (NetworkSetupScript.configInput.nodeCount == 0)
             {
-                NetworkSetupScript.configInput = new NetworkConfigurator.ConfigInput(
-                    5,
-                    1,
-                    1,
-                    1,
-                    10,
-                    2);
+                NetworkSetupScript.configInput = new NetworkConfigurator.ConfigInput(5, 1, 1, 1, 10, 2);
             }
             else
             {
@@ -93,7 +84,6 @@ namespace TwoDesperadosTest
             int spamCount;
             int spamDecrease;
             int trapDelay;
-
 
             string nodeCountString = nodeCountInput.GetComponent<TMP_InputField>().text;
             if (!Int32.TryParse(nodeCountString, out nodeCount))
