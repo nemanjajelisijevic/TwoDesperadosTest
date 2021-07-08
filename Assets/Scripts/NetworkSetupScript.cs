@@ -79,6 +79,7 @@ namespace TwoDesperadosTest
         {
             SceneManager.LoadScene("HackingGameScene");
             NetworkSetupScript.tryAgain = true;
+            TracerController.tracerCount = 0;
         }
 
         public void OnGenerateNewLevel()

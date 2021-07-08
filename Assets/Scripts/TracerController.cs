@@ -8,7 +8,7 @@ namespace TwoDesperadosTest
 
     public class TracerController
     {
-        private static int tracerCount = 0;
+        public static int tracerCount = 0;
         private int tracerNumber;
 
         private LinkAnimator tracerAnimator;
