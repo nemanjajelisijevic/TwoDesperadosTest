@@ -43,10 +43,6 @@ namespace TwoDesperadosTest
 
         private System.Random randomNoGenerator;
 
-        public NetworkNode startNode = null;
-        public List<NetworkNode> firewallNodes;
-        public List<NetworkNode> treasureNodes;
-        public List<NetworkNode> spamNodes;
         
         //disconnect dense links attribute
         public static float disconnectionLinksAngle = 12f;
@@ -57,9 +53,16 @@ namespace TwoDesperadosTest
             public List<Link> links { get; set; }
             public NetworkNode startNode { get; set; }
 
+            public List<NetworkNode> firewallNodes;
+            public List<NetworkNode> treasureNodes;
+            public List<NetworkNode> spamNodes;
+
             public NetworkConfiguration()
             {
                 nodes = new List<NetworkNode>();
+                firewallNodes = new List<NetworkNode>();
+                treasureNodes = new List<NetworkNode>();
+                spamNodes = new List<NetworkNode>();
             }
         }
 
@@ -93,9 +96,7 @@ namespace TwoDesperadosTest
             nodeTypeAmount.Add(NetworkNode.Type.Firewall, configInput.firewallCount);
             nodeTypeAmount.Add(NetworkNode.Type.Spam, configInput.spamCount);
 
-            firewallNodes = new List<NetworkNode>();
-            treasureNodes = new List<NetworkNode>();
-            spamNodes = new List<NetworkNode>();
+            
 
             randomNoGenerator = new System.Random();
 
@@ -106,6 +107,10 @@ namespace TwoDesperadosTest
         {
 
             NetworkConfiguration ret = new NetworkConfiguration();
+
+            ret.firewallNodes = new List<NetworkNode>();
+            ret.treasureNodes = new List<NetworkNode>();
+            ret.spamNodes = new List<NetworkNode>();
 
             int numberOfNodes = nodeTypeAmount[NetworkNode.Type.Data];
 
@@ -155,16 +160,16 @@ namespace TwoDesperadosTest
 
                 if (nodeTypeAmount[NetworkNode.Type.Start] > 0)//TODO refactor
                 {
-                    ret.startNode = startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
+                    ret.startNode = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Start)
                         .SetHackingDifficulty(hackingDiff);
-                    ret.nodes.Add(startNode);
+                    ret.nodes.Add(ret.startNode);
                     nodeTypeAmount[NetworkNode.Type.Start] = nodeTypeAmount[NetworkNode.Type.Start] - 1;
                 }
                 else if (nodeTypeAmount[NetworkNode.Type.Firewall] > 0)
                 {
                     NetworkNode firewall = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Firewall)
                         .SetHackingDifficulty(hackingDiff);
-                    firewallNodes.Add(firewall);
+                    ret.firewallNodes.Add(firewall);
                     ret.nodes.Add(firewall);
                     nodeTypeAmount[NetworkNode.Type.Firewall] = nodeTypeAmount[NetworkNode.Type.Firewall] - 1;
                 }
@@ -172,7 +177,7 @@ namespace TwoDesperadosTest
                 {
                     NetworkNode treasure = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Treasure)
                         .SetHackingDifficulty(hackingDiff);
-                    treasureNodes.Add(treasure);
+                    ret.treasureNodes.Add(treasure);
                     ret.nodes.Add(treasure);
                     nodeTypeAmount[NetworkNode.Type.Treasure] = nodeTypeAmount[NetworkNode.Type.Treasure] - 1;
                 }
@@ -180,7 +185,7 @@ namespace TwoDesperadosTest
                 {
                     NetworkNode spam = new NetworkNode(fieldCenterMatrix[row, column], NetworkNode.Type.Spam)
                         .SetHackingDifficulty(hackingDiff);
-                    spamNodes.Add(spam);
+                    ret.spamNodes.Add(spam);
                     ret.nodes.Add(spam);
                     nodeTypeAmount[NetworkNode.Type.Spam] = nodeTypeAmount[NetworkNode.Type.Spam] - 1;
                 }
@@ -200,10 +205,10 @@ namespace TwoDesperadosTest
             DisconnectDenseLinks(ret.links);
 
             //disconnect firewall node if next to start node
-            startNode.GetNieghbourNodes().ForEach(neighbor => {
-                if (neighbor.GetNodeType().Equals(NetworkNode.Type.Firewall) && neighbor.GetNoOfLinks() > 1 && startNode.GetNoOfLinks() > 1)
+            ret.startNode.GetNieghbourNodes().ForEach(neighbor => {
+                if (neighbor.GetNodeType().Equals(NetworkNode.Type.Firewall) && neighbor.GetNoOfLinks() > 1 && ret.startNode.GetNoOfLinks() > 1)
                 {
-                    Link startToFirewallLink = startNode.GetLinkToNode(neighbor);
+                    Link startToFirewallLink = ret.startNode.GetLinkToNode(neighbor);
                     startToFirewallLink.Disconnect();
                     ret.links.Remove(startToFirewallLink);
                 }

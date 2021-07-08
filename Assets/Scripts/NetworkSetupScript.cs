@@ -177,9 +177,9 @@ namespace TwoDesperadosTest
                 pathFinder = new DijkstraPathFinder();
 
                 //configure tracer controllers
-                networkConfigurator.firewallNodes.ForEach(firewallNode =>
+                networkConf.firewallNodes.ForEach(firewallNode =>
                 {
-                    List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConfigurator.startNode);
+                    List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(firewallNode, networkConf.startNode);
                     
                     TracerController tracer = new TracerController(new LinkAnimator(graphContainer, this), new TimeoutWaiter(this))
                         .SetTraceCompletedAction(() => {
@@ -234,7 +234,7 @@ namespace TwoDesperadosTest
                         if (reward.Equals(HackingController.Reward.Nuke))
                             Nuke_ui.text = String.Format(nukesUiTemplate, count);
                         else if (reward.Equals(HackingController.Reward.Trap))
-                            Trap_ui.text = String.Format(trapsUiTemplate, count); ;
+                            Trap_ui.text = String.Format(trapsUiTemplate, count);
 
                     })
                     .SetUpdateXpAction(Xp => XP_ui.text = (String.Format(xpUiTemplate, Xp)))
@@ -251,13 +251,14 @@ namespace TwoDesperadosTest
                         {
                             NetworkNode currentTracingNode = tracerPair.Value.Key.IsActive() ? tracerPair.Value.Key.GetCurrentTracingNode() : tracerPair.Key;
 
-                            List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(currentTracingNode, networkConfigurator.startNode);
+                            List<NetworkNode> cheapestPathToStart = pathFinder.FindShortestPath(currentTracingNode, networkConf.startNode);
                                 
                             firewallTracerPathMap[tracerPair.Key].Value.Clear();
                             cheapestPathToStart.ForEach(node => firewallTracerPathMap[tracerPair.Key].Value.Add(node));
 
                             //set new path to tracer controller
-                            firewallTracerPathMap[tracerPair.Key].Key.SetTracePath(cheapestPathToStart);
+                            if (tracerPair.Value.Key.IsActive())
+                                firewallTracerPathMap[tracerPair.Key].Key.SetTracePath(cheapestPathToStart);
                                 
                             consolePrinter(String.Format("Tracer {0} recalculated to start.", tracerPair.Value.Key.GetTracerNumber()), Color.red);
                         }
@@ -278,8 +279,8 @@ namespace TwoDesperadosTest
                         actionPanel.GetComponent<RectTransform>().anchoredPosition = 
                             new Vector2(
                                 node.GetPosition().x < graphContainer.sizeDelta.x / 2 ? node.GetPosition().x + 50 : node.GetPosition().x - 50, 
-                                node.GetPosition().y < graphContainer.sizeDelta.y / 2 ? node.GetPosition().y + 50 : node.GetPosition().y - 50
-                                );
+                                node.GetPosition().y < graphContainer.sizeDelta.y / 2 ? node.GetPosition().y + 50 : node.GetPosition().y - 50);
+
                         Button[] buttons = actionPanel.GetComponentsInChildren<Button>();
                         
                         foreach (Button butt in buttons)
